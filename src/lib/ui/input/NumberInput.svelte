@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { twMerge } from "tailwind-merge";
-    import { inputDefault } from "../styles";
+    import { common, focusable, inputDefault } from "../styles";
     import { ChevronDown, ChevronUp } from "@lucide/svelte";
     import { cn } from "../utils";
 
@@ -29,17 +28,18 @@
         ...restProps
     }: InputProps = $props();
 
-    // start with empty string if value is 0 so placeholder can show
     let valueAsString = $state(value === 0 ? "" : (value?.toString() ?? ""));
     let error = $state(false);
 
-    let mergedClasses = $derived(twMerge(inputDefault, cls));
+    let mergedClasses = $derived(cn(common, focusable, inputDefault, cls));
     let inputElement: HTMLInputElement;
 
     function roundToStep(num: number) {
         return Math.round(num / step) * step;
     }
 
+    let incrementTimeout: ReturnType<typeof setTimeout> | null = null;
+    let decrementTimeout: ReturnType<typeof setTimeout> | null = null;
     let incrementInterval: ReturnType<typeof setInterval> | null = null;
     let decrementInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -47,10 +47,16 @@
         e.preventDefault();
         if (disabled || readonly) return;
         increment();
-        incrementInterval = setInterval(increment, 50);
+        incrementTimeout = setTimeout(() => {
+            incrementInterval = setInterval(increment, 50);
+        }, 400); // delay before repetition
     }
 
     function stopIncrement() {
+        if (incrementTimeout) {
+            clearTimeout(incrementTimeout);
+            incrementTimeout = null;
+        }
         if (incrementInterval) {
             clearInterval(incrementInterval);
             incrementInterval = null;
@@ -61,10 +67,16 @@
         e.preventDefault();
         if (disabled || readonly) return;
         decrement();
-        decrementInterval = setInterval(decrement, 50);
+        decrementTimeout = setTimeout(() => {
+            decrementInterval = setInterval(decrement, 50);
+        }, 400); // delay before repetition
     }
 
     function stopDecrement() {
+        if (decrementTimeout) {
+            clearTimeout(decrementTimeout);
+            decrementTimeout = null;
+        }
         if (decrementInterval) {
             clearInterval(decrementInterval);
             decrementInterval = null;
@@ -117,7 +129,6 @@
 
     function handleBlur() {
         if (valueAsString === "") {
-            // keep empty so placeholder is visible
             value = 0;
         } else {
             const numValue = parseFloat(valueAsString);
@@ -145,7 +156,7 @@
     }
 </script>
 
-<div class="relative inline-flex items-center w-40 rounded-md">
+<div class="relative inline-flex items-center w-60 rounded-md">
     <input
         bind:this={inputElement}
         bind:value={valueAsString}

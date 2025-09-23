@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { HTMLInputAttributes } from "svelte/elements";
-    import { twMerge } from "tailwind-merge";
-    import { inputDefault } from "../styles";
+    import { common, focusable, inputDefault } from "../styles";
+    import { cn } from "../utils";
 
     type InputProps = Omit<HTMLInputAttributes, 'class'> & {
         class?: string; 
@@ -9,7 +9,7 @@
 
     let { class: cls = "", ...others }: InputProps = $props();
     
-    let mergedClasses = $derived(twMerge(inputDefault, cls));
+    let mergedClasses = $derived(cn(common, focusable, inputDefault, cls));
 </script>
 
 <input {...others} class={mergedClasses}/>

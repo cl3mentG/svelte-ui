@@ -3,9 +3,9 @@
     generics="Option extends {label: string, value: string | number}"
 >
     import { twMerge } from "tailwind-merge";
-    import { inputDefault } from "../styles";
+    import { common, focusable, inputDefault, selectDefault } from "../styles";
     import { ChevronDown, ChevronUp } from "@lucide/svelte";
-    import { cn, extractAndRemoveDimensionClasses } from "../utils";
+    import { cn } from "../utils";
     import type { Snippet } from "svelte";
 
     type SelectProps = {
@@ -34,7 +34,7 @@
     let isOpen = $state(false);
     let error = $state(false);
 
-    let mergedClasses = $derived(twMerge(inputDefault, cls));
+    let mergedClasses = $derived(cn(common, focusable, selectDefault, cls));
     let selectElement: HTMLDivElement;
 
     function toggleOpen() {
@@ -67,7 +67,7 @@
 
 <div
     bind:this={selectElement}
-    class={cn("relative inline-flex items-center w-40 rounded-md", cls)}
+    class={cn("relative inline-flex items-center w-60 rounded-md", cls)}
     role="combobox"
     aria-controls="select-options"
     aria-haspopup="listbox"
