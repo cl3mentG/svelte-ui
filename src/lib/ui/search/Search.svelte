@@ -1,12 +1,19 @@
 <script
     lang="ts"
-    generics="Option extends {label: string, value: string | number}"
+    generics="T extends { label: string; group?: string }, Options extends Record<string, T>"
 >
-    import { twMerge } from "tailwind-merge";
-    import { common, focusable, inputDefault, searchDefault } from "../styles";
+    import { common, focusable, searchDefault } from "../styles";
     import { cn } from "../utils";
     import type { Snippet } from "svelte";
     import { Search, X } from "@lucide/svelte";
+
+    type GroupedOptions = Record<
+        string,
+        {
+            options: Record<string, T>;
+            groupProps?: T;
+        }
+    >;
 
     type SearchSelectProps = {
         class?: string;
@@ -17,8 +24,12 @@
         placeholder?: string;
         disabled?: boolean;
         readonly?: boolean;
-        options: Option[];
-        optionSnippet?: Snippet<[Option, boolean]>;
+        noResultLabel?: string;
+        options: Options;
+        optionSnippet?: Snippet<[T, boolean]>;
+        groupSnippet?: Snippet<[T]>;
+        onSelect?: (value: string) => void;
+        groups?: Options;
     };
 
     let {
@@ -27,9 +38,13 @@
         value = null,
         disabled = false,
         readonly = false,
-        placeholder,
-        options = [],
+        placeholder = "Search",
+        noResultLabel = "No results found.",
+        options = {} as Options,
         optionSnippet,
+        groupSnippet,
+        groups,
+        onSelect,
         ...restProps
     }: SearchSelectProps = $props();
 
@@ -37,18 +52,42 @@
     let search = $state("");
     let selectElement: HTMLDivElement;
 
-    let filteredOptions = $derived(
-        search
-            ? options.filter((o) =>
-                  o.label.toLowerCase().includes(search.toLowerCase()),
-              )
-            : options,
+    let groupedOptions = $derived(
+        Object.entries(options).reduce<GroupedOptions>(
+            (acc, [optionKey, opt]) => {
+                const groupKey = opt.group ?? "_ungrouped_";
+
+                // if no search or search query not included
+                if (
+                    !opt.label
+                        .toLocaleLowerCase()
+                        .includes(search.toLocaleLowerCase())
+                ) {
+                    return acc;
+                }
+
+                if (!acc[groupKey]) {
+                    acc[groupKey] = {
+                        options: {},
+                        groupProps: groups?.[groupKey],
+                    };
+                }
+
+                acc[groupKey].options[optionKey] = opt;
+                return acc;
+            },
+            {},
+        ),
     );
 
-    function selectOption(option: Option) {
-        value = option.value;
-        search = option.label;
+    function selectOption(optionKey: string, optionData: T) {
+        value = optionKey;
+        search = optionData.label;
         isOpen = false;
+
+        if (onSelect) {
+            onSelect(optionKey);
+        }
     }
 
     function handleBlur(e: FocusEvent) {
@@ -64,18 +103,10 @@
         }
     }
 
-    function resetValue(e: MouseEvent)
-    {
+    function resetValue(e: MouseEvent) {
         search = "";
         value = null;
     }
-
-    $effect(() => {
-        const selected = options.find((o) => o.value === value);
-        if (selected && !isOpen) {
-            search = selected.label;
-        }
-    });
 
     let mergedClasses = cn(common, focusable, searchDefault, cls);
 </script>
@@ -91,7 +122,7 @@
             class={cn(
                 mergedClasses,
                 "pr-8 pl-9 w-full rounded-md text-left flex items-center cursor-text text-ellipsis",
-                (noSearchIcon && value === null) && "pl-4"
+                noSearchIcon && value === null && "pl-4",
             )}
             {placeholder}
             bind:value={search}
@@ -114,33 +145,61 @@
         {/if}
     </div>
 
-    {#if isOpen && filteredOptions.length > 0}
+    {#if isOpen}
+        {@const data = Object.entries(groupedOptions)}
         <div
             class="absolute left-0 top-full w-full max-h-60 rounded-md shadow-sm z-10 bg-white border-2 border-gray-300 overflow-hidden"
         >
             <ul role="listbox" class="max-h-60 overflow-auto rounded-md">
-                {#each filteredOptions as option}
-                    <li role="option" aria-selected={value === option.value}>
-                        <button
-                            type="button"
-                            class={cn(
-                                "block w-full text-left px-3 py-1 hover:bg-gray-100 whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer",
-                                value === option.value &&
-                                    optionSnippet == null &&
-                                    "bg-gray-50 font-medium",
-                            )}
-                            onclick={() => selectOption(option)}
-                        >
-                            {#if optionSnippet == null}
-                                {option.label}
-                            {:else}
-                                {@render optionSnippet(
-                                    option,
-                                    value === option.value,
-                                )}
-                            {/if}
-                        </button>
+                {#if data.length == 0}
+                    <li
+                        class="px-3 py-1 text-gray-500 bg-white italic cursor-not-allowed"
+                    >
+                        {noResultLabel}
                     </li>
+                {/if}
+                {#each data as [groupKey, groupData] (groupKey)}
+                    {#if groupKey !== "_ungrouped_" && groups != undefined}
+                        {#if groupSnippet && groupData.groupProps}
+                            <li
+                                class="px-3 py-1 bg-white sticky top-0 cursor-not-allowed"
+                            >
+                                {@render groupSnippet(groupData.groupProps)}
+                            </li>
+                        {:else}
+                            <li
+                                class="px-3 py-1 text-gray-500 font-semibold bg-white text-xs italic sticky top-0 cursor-not-allowed"
+                            >
+                                {groupData.groupProps?.label}
+                            </li>
+                        {/if}
+                    {/if}
+
+                    {#each Object.entries(groupData.options) as [optionValue, optionData] (optionValue)}
+                        {@const isSelected = value === optionValue}
+                        <li role="option" aria-selected={isSelected}>
+                            <button
+                                type="button"
+                                class={cn(
+                                    "block w-full text-left px-6 py-1 hover:bg-gray-100 whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer",
+                                    isSelected &&
+                                        optionSnippet == null &&
+                                        "bg-gray-50 font-medium",
+                                )}
+                                onclick={() =>
+                                    selectOption(optionValue, optionData)}
+                            >
+                                {#if optionSnippet == null}
+                                    {optionData.label}
+                                {:else}
+                                    {@render optionSnippet(
+                                        optionData,
+                                        isSelected,
+                                    )}
+                                {/if}
+                            </button>
+                        </li>
+                    {/each}
                 {/each}
             </ul>
         </div>

@@ -9,65 +9,72 @@
 <Button>Click here</Button>
 
 <Input type="number" />
-<NumberInput max={3} min={-3} placeholder="Enter number between -3 and 3" />
+<NumberInput max={3} min={-3} placeholder="Number between -3 and 3" />
 <Select
-    options={[
-        { label: "First option", value: 1 },
-        { label: "Second option", value: 2 },
-        { label: "BVBBBBBBBBBBBBBBBBBBB option", value: 3 },
-        { label: "Fourth option", value: 4 },
-        { label: "Fifth option", value: 5 },
-        { label: "Sixth option", value: 6 },
-        { label: "Seventh option", value: 7 },
-        { label: "Eighth option", value: 8 },
-        { label: "Ninth option", value: 9 },
-        { label: "Tenth option", value: 10 },
-        { label: "Eleventh option", value: 11 },
-        { label: "Twelfth option", value: 12 },
-        { label: "Thirteenth option", value: 13 },
-        { label: "Fourteenth option", value: 14 },
-        { label: "Fifteenth option", value: 15 },
-    ]}
-    placeholder="Select a value"
-/>
+    placeholder="What do you like most?"
+    options={{
+        "1": { label: "Pancakes", group: "1" },
+        "2": { label: "Crêpes", group: "1" },
+        "3": { label: "Tiramisu", group: "1" },
+        "4": { label: "Burger", group: "2" },
+        "5": { label: "French fries", group: "2" },
+        "6": { label: "Soup", group: "2" },
+        "7": { label: "Ice cream", group: "1" },
+        "8": { label: "Mojito", group: "3" },
+        "9": { label: "Coke", group: "3" },
+        "10": { label: "Water", group: "3" },
+    }}
+    groups={{
+        "1": { label: "Desserts" },
+        "2": { label: "Main courses" },
+        "3": { label: "Drinks" },
+    }}
+>
+    {#snippet groupSnippet(group)}
+        <div class="font-bold italic">{group.label}</div>
+    {/snippet}
+</Select>
 
 <Search
-    noSearchIcon
-    options={[
-        { label: "First option", value: 1 },
-        { label: "Second option", value: 2 },
-        { label: "Fourth option", value: 4 },
-        { label: "Fifth option", value: 5 },
-        { label: "Sixth option", value: 6 },
-        { label: "Seventh option", value: 7 },
-        { label: "Eighth option", value: 8 },
-        { label: "Ninth option", value: 9 },
-        { label: "Tenth option", value: 10 },
-        { label: "Eleventh option", value: 11 },
-        { label: "Twelfth option", value: 12 },
-        { label: "Thirteenth option", value: 13 },
-        { label: "Fourteenth option", value: 14 },
-        { label: "Fifteenth option", value: 15 },
-    ]}
     placeholder="Search"
+    noResultLabel="No results found."
+    options={{
+        "1": { label: "Pancakes", group: "1" },
+        "2": { label: "Crêpes", group: "1" },
+        "3": { label: "Tiramisu", group: "1" },
+        "4": { label: "Burger", group: "2" },
+        "5": { label: "French fries", group: "2" },
+        "6": { label: "Soup", group: "2" },
+        "7": { label: "Ice cream", group: "1" },
+        "8": { label: "Mojito", group: "3" },
+        "9": { label: "Coke", group: "3" },
+        "10": { label: "Water", group: "3" },
+    }}
+    groups={{
+        "1": { label: "Desserts" },
+        "2": { label: "Main courses" },
+        "3": { label: "Drinks" },
+    }}
 />
 
 <Multisearch
-    options={[
-        { label: "First option", value: 1 },
-        { label: "Second option", value: 2 },
-        { label: "Fourth option", value: 4 },
-        { label: "Fifth option", value: 5 },
-        { label: "Sixth option", value: 6 },
-        { label: "Seventh option", value: 7 },
-        { label: "Eighth option", value: 8 },
-        { label: "Ninth option", value: 9 },
-        { label: "Tenth option", value: 10 },
-        { label: "Eleventh option", value: 11 },
-        { label: "Twelfth option", value: 12 },
-        { label: "Thirteenth option", value: 13 },
-        { label: "Fourteenth option", value: 14 },
-        { label: "Fifteenth option", value: 15 },
-    ]}
     placeholder="Search"
+    noResultLabel="No results found."
+    options={{
+        "1": { label: "Pancakes", group: "1" },
+        "2": { label: "Crêpes", group: "1" },
+        "3": { label: "Tiramisu", group: "1" },
+        "4": { label: "Burger", group: "2" },
+        "5": { label: "French fries", group: "2" },
+        "6": { label: "Soup", group: "2" },
+        "7": { label: "Ice cream", group: "1" },
+        "8": { label: "Mojito", group: "3" },
+        "9": { label: "Coke", group: "3" },
+        "10": { label: "Water", group: "3" },
+    }}
+    groups={{
+        "1": { label: "Desserts" },
+        "2": { label: "Main courses" },
+        "3": { label: "Drinks" },
+    }}
 />

@@ -1,23 +1,33 @@
 <script
     lang="ts"
-    generics="Option extends {label: string, value: string | number}"
+    generics="T extends { label: string; group?: string }, Options extends Record<string, T>"
 >
-    import { twMerge } from "tailwind-merge";
-    import { common, focusable, inputDefault, selectDefault } from "../styles";
+    import { common, focusable, selectDefault } from "../styles";
     import { ChevronDown, ChevronUp } from "@lucide/svelte";
     import { cn } from "../utils";
     import type { Snippet } from "svelte";
+
+    type GroupedOptions = Record<
+        string,
+        {
+            options: Record<string, T>;
+            groupProps?: T;
+        }
+    >;
 
     type SelectProps = {
         class?: string;
         id?: string;
         name?: string;
-        value?: string | number;
+        value?: string;
         placeholder?: string;
         disabled?: boolean;
         readonly?: boolean;
-        options: Option[];
-        optionSnippet?: Snippet<[Option, boolean]>;
+        options: Options;
+        optionSnippet?: Snippet<[T, boolean]>;
+        groupSnippet?: Snippet<[T]>;
+        onSelect?: (value: string) => void;
+        groups?: Options;
     };
 
     let {
@@ -26,8 +36,11 @@
         disabled = false,
         readonly = false,
         placeholder,
-        options = [],
+        options = {} as Options,
         optionSnippet,
+        groupSnippet,
+        groups,
+        onSelect,
         ...restProps
     }: SelectProps = $props();
 
@@ -37,15 +50,39 @@
     let mergedClasses = $derived(cn(common, focusable, selectDefault, cls));
     let selectElement: HTMLDivElement;
 
+    // group options
+    let groupedOptions = $derived(
+        Object.entries(options).reduce<GroupedOptions>(
+            (acc, [optionKey, opt]) => {
+                const groupKey = opt.group ?? "_ungrouped_";
+
+                if (!acc[groupKey]) {
+                    acc[groupKey] = {
+                        options: {},
+                        groupProps: groups?.[groupKey],
+                    };
+                }
+
+                acc[groupKey].options[optionKey] = opt;
+                return acc;
+            },
+            {},
+        ),
+    );
+
+
     function toggleOpen() {
         if (disabled || readonly) return;
         isOpen = !isOpen;
     }
 
-    function selectOption(option: Option) {
-        value = option.value;
+    function selectOption(key: string) {
+        value = key;
         isOpen = false;
         error = false;
+        if (onSelect) {
+            onSelect(key);
+        }
     }
 
     function handleBlur(e: FocusEvent) {
@@ -95,11 +132,11 @@
                 "block overflow-hidden text-ellipsis whitespace-nowrap",
             )}
         >
-            {value === ""
-                ? placeholder
-                : options.find((o) => o.value === value)?.label}
+            {value === "" ? placeholder : options[value].label}
         </span>
-        <span class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400">
+        <span
+            class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+        >
             {#if isOpen}
                 <ChevronUp class="shrink-0" />
             {:else}
@@ -112,35 +149,51 @@
         <div
             class="absolute left-0 top-full w-full max-h-60 rounded-md shadow-sm z-10 bg-white border-2 border-gray-300 overflow-hidden"
         >
-            <!-- Inner scrollable container -->
             <div class="max-h-60 overflow-auto">
                 <ul id="select-options" role="listbox" class="rounded-md">
-                    {#each options as option}
-                        <li
-                            id={`option-${option.value}`}
-                            role="option"
-                            aria-selected={value === option.value}
-                        >
-                            <button
-                                type="button"
-                                class={cn(
-                                    "block w-full text-left px-3 py-1 hover:bg-gray-100 whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer",
-                                    value === option.value &&
-                                        optionSnippet == null &&
-                                        "bg-gray-50 font-medium",
-                                )}
-                                onclick={() => selectOption(option)}
+                    {#each Object.entries(groupedOptions) as [groupKey, groupData] (groupKey)}
+                        {#if groupKey !== "_ungrouped_" && groups != undefined}
+                            {#if groupSnippet && groupData.groupProps}
+                                <li
+                                    class="px-3 py-1 bg-white sticky top-0 cursor-not-allowed"
+                                >
+                                    {@render groupSnippet(groupData.groupProps)}
+                                </li>
+                            {:else}
+                                <li
+                                    class="px-3 py-1 text-gray-500 font-semibold bg-white text-xs italic sticky top-0 cursor-not-allowed"
+                                >
+                                    {groupData.groupProps?.label}
+                                </li>
+                            {/if}
+                        {/if}
+                        {#each Object.entries(groupData.options) as [optionValue, optionData] (optionValue)}
+                            <li
+                                id={`option-${optionValue}`}
+                                role="option"
+                                aria-selected={value === optionValue}
                             >
-                                {#if optionSnippet == null}
-                                    {option.label}
-                                {:else}
-                                    {@render optionSnippet(
-                                        option,
-                                        value === option.value,
+                                <button
+                                    type="button"
+                                    class={cn(
+                                        "block w-full text-left px-6 py-1 hover:bg-gray-100 whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer",
+                                        value === optionValue &&
+                                            optionSnippet == null &&
+                                            "bg-gray-50 font-medium",
                                     )}
-                                {/if}
-                            </button>
-                        </li>
+                                    onclick={() => selectOption(optionValue)}
+                                >
+                                    {#if optionSnippet == null}
+                                        {optionData.label}
+                                    {:else}
+                                        {@render optionSnippet(
+                                            optionData,
+                                            value === optionValue,
+                                        )}
+                                    {/if}
+                                </button>
+                            </li>
+                        {/each}
                     {/each}
                 </ul>
             </div>
