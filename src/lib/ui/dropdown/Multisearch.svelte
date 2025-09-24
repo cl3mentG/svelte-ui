@@ -1,51 +1,47 @@
-<script
-    lang="ts"
-    generics="T extends { label: string; group?: string }, Options extends Record<string, T>"
->
+<script lang="ts" generics="Option extends BaseOption, Group extends BaseGroup">
     import { cn } from "../utils";
-    import type { Snippet } from "svelte";
-    import { Search, X } from "@lucide/svelte";
+    import { X } from "@lucide/svelte";
     import { common, focusable, multisearchFocused } from "../styles";
+    import type {
+        BaseOption,
+        BaseGroup,
+        GroupedOptions,
+        CommonDropdownProps,
+    } from "./types";
+    import type { CommonControlProps } from "../types";
+    import Menu from "./Menu.svelte";
 
-    type GroupedOptions = Record<
-        string,
-        {
-            options: Record<string, T>;
-            groupProps?: T;
-        }
-    >;
+    type _CheckOption<T extends BaseOption> = T;
+    type _CheckGroup<T extends BaseGroup> = T;
 
-    type SearchSelectProps = {
-        class?: string;
-        noSearchIcon?: boolean;
-        id?: string;
-        name?: string;
-        value?: string[];
-        placeholder?: string;
-        disabled?: boolean;
-        readonly?: boolean;
-        noResultLabel?: string;
-        options: Options;
-        optionSnippet?: Snippet<[T, boolean]>;
-        groupSnippet?: Snippet<[T]>;
-        onSelect?: (value: string) => void;
-        groups?: Options;
-    };
+    type SearchSelectProps = CommonControlProps &
+        CommonDropdownProps<Option, Group> & {
+            value?: string[];
+            noSearchIcon?: boolean;
+        };
 
     let {
+        value = $bindable([]),
+
         class: cls = "",
-        noSearchIcon = false,
-        value = $bindable([] as string[]),
-        disabled = false,
-        readonly = false,
+        name,
+        id,
+        disabled,
+        readonly,
+
         placeholder = "Search",
+        options,
+        groups,
+
+        noSearchIcon = false,
+
         noResultLabel = "No results found.",
-        options = {} as Options,
+        onSelect,
+
         optionSnippet,
         groupSnippet,
-        groups,
-        onSelect,
-        ...restProps
+        sortOptions,
+        sortGroups,
     }: SearchSelectProps = $props();
 
     let isFocused = $state(false);
@@ -57,7 +53,7 @@
     let listboxId = "multisearch-listbox";
 
     let groupedOptions = $derived(
-        Object.entries(options).reduce<GroupedOptions>(
+        Object.entries(options).reduce<GroupedOptions<Option, Group>>(
             (acc, [optionKey, opt]) => {
                 const groupKey = opt.group ?? "_ungrouped_";
 
@@ -184,69 +180,22 @@
                 }}
                 onkeydown={handleKeydown}
                 disabled={disabled || readonly}
-                {...restProps}
             />
         </div>
     </div>
-    <!-- groupedOptions -->
-    {#if isOpen}
-        {@const data = Object.entries(groupedOptions)}
-        <div
-            id={listboxId}
-            class="absolute left-0 top-full w-full max-h-60 rounded-md shadow-sm z-10 bg-white border-2 border-gray-300 overflow-hidden"
-        >
-            <ul role="listbox" class="max-h-60 overflow-auto rounded-md">
-                {#if data.length == 0}
-                    <li
-                        class="px-3 py-1 text-gray-500 bg-white italic cursor-not-allowed"
-                    >
-                        {noResultLabel}
-                    </li>
-                {/if}
-                {#each data as [groupKey, groupData] (groupKey)}
-                    {#if groupKey !== "_ungrouped_" && groups != undefined}
-                        {#if groupSnippet && groupData.groupProps}
-                            <li
-                                class="px-3 py-1 bg-white sticky top-0 cursor-not-allowed"
-                            >
-                                {@render groupSnippet(groupData.groupProps)}
-                            </li>
-                        {:else}
-                            <li
-                                class="px-3 py-1 text-gray-500 font-semibold bg-white text-xs italic sticky top-0 cursor-not-allowed"
-                            >
-                                {groupData.groupProps?.label}
-                            </li>
-                        {/if}
-                    {/if}
 
-                    {#each Object.entries(groupData.options) as [optionValue, optionData] (optionValue)}
-                        {@const isSelected = value.includes(optionValue)}
-                        <li role="option" aria-selected={isSelected}>
-                            <button
-                                type="button"
-                                class={cn(
-                                    "block w-full text-left px-6 py-1 hover:bg-gray-100 whitespace-nowrap overflow-hidden text-ellipsis cursor-pointer",
-                                    isSelected &&
-                                        optionSnippet == null &&
-                                        "bg-gray-50 font-medium",
-                                )}
-                                onclick={() =>
-                                    selectOption(optionValue)}
-                            >
-                                {#if optionSnippet == null}
-                                    {optionData.label}
-                                {:else}
-                                    {@render optionSnippet(
-                                        optionData,
-                                        isSelected,
-                                    )}
-                                {/if}
-                            </button>
-                        </li>
-                    {/each}
-                {/each}
-            </ul>
-        </div>
-    {/if}
+    <Menu
+        {options}
+        {isOpen}
+        {groupedOptions}
+        {selectOption}
+        {noResultLabel}
+        {placeholder}
+        {groups}
+        {optionSnippet}
+        {groupSnippet}
+        {sortOptions}
+        {sortGroups}
+        isSelected={(val: string) => value.includes(val)}
+    />
 </div>

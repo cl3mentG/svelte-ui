@@ -45,11 +45,12 @@
 
     function startIncrement(e: MouseEvent) {
         e.preventDefault();
+        inputElement.focus();
         if (disabled || readonly) return;
         increment();
         incrementTimeout = setTimeout(() => {
             incrementInterval = setInterval(increment, 50);
-        }, 400); // delay before repetition
+        }, 400);
     }
 
     function stopIncrement() {
@@ -65,11 +66,12 @@
 
     function startDecrement(e: MouseEvent) {
         e.preventDefault();
+        inputElement.focus();
         if (disabled || readonly) return;
         decrement();
         decrementTimeout = setTimeout(() => {
             decrementInterval = setInterval(decrement, 50);
-        }, 400); // delay before repetition
+        }, 400);
     }
 
     function stopDecrement() {
@@ -141,18 +143,16 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
+        if (disabled || readonly) return;
         if (e.key === "Enter") {
             inputElement.blur();
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            increment();
+        } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            decrement();
         }
-    }
-
-    function handleButtonClick(
-        e: MouseEvent,
-        action: "increment" | "decrement",
-    ) {
-        e.preventDefault();
-        inputElement.focus();
-        action === "increment" ? increment() : decrement();
     }
 </script>
 

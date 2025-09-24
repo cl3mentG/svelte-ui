@@ -1,15 +1,13 @@
 <script lang="ts">
     import { Button } from "$lib/ui/button";
     import { Input, NumberInput } from "$lib/ui/input";
-    import { Search } from "$lib/ui/search";
-    import Multisearch from "$lib/ui/search/Multisearch.svelte";
-    import { Select } from "$lib/ui/select";
+    import { Select, Search, Multisearch } from "$lib/ui/dropdown";
 </script>
 
 <Button>Click here</Button>
 
 <Input type="number" />
-<NumberInput max={3} min={-3} placeholder="Number between -3 and 3" />
+<NumberInput max={3} min={-3} step={0.1} placeholder="Number between -3 and 3" />
 <Select
     placeholder="What do you like most?"
     options={{
@@ -29,6 +27,8 @@
         "2": { label: "Main courses" },
         "3": { label: "Drinks" },
     }}
+    onSelect={(selectedId: string) =>{console.log(selectedId)}}
+    
 >
     {#snippet groupSnippet(group)}
         <div class="font-bold italic">{group.label}</div>
