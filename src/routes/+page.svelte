@@ -1,13 +1,20 @@
 <script lang="ts">
     import { Button } from "$lib/ui/button";
-    import { Input, NumberInput } from "$lib/ui/input";
+    import { Input, NumberInput, RegexInput } from "$lib/ui/input";
     import { Select, Search, Multisearch } from "$lib/ui/dropdown";
+    import { VerificationCode } from "$lib/ui/verification-code";
 </script>
 
 <Button>Click here</Button>
 
 <Input type="number" />
-<NumberInput max={3} min={-3} step={0.1} placeholder="Number between -3 and 3" />
+<NumberInput
+    decimalSeparator=","
+    max={60}
+    min={3}
+    step={0.1}
+    placeholder="Number between -3 and 3"
+/>
 <Select
     placeholder="What do you like most?"
     options={{
@@ -27,13 +34,16 @@
         "2": { label: "Main courses" },
         "3": { label: "Drinks" },
     }}
-    onSelect={(selectedId: string) =>{console.log(selectedId)}}
-    
+    onSelect={(selectedId: string) => {
+        console.log(selectedId);
+    }}
 >
     {#snippet groupSnippet(group)}
         <div class="font-bold italic">{group.label}</div>
     {/snippet}
 </Select>
+
+<RegexInput validRegex={/^hello$/} completionRegex={/^h(e(l(l(o)?)?)?)?$/} />
 
 <Search
     placeholder="Search"
@@ -59,7 +69,9 @@
 
 <Multisearch
     placeholder="Search"
+    name="test"
     noResultLabel="No results found."
+    minCount={3}
     options={{
         "1": { label: "Pancakes", group: "1" },
         "2": { label: "Crêpes", group: "1" },
@@ -78,3 +90,6 @@
         "3": { label: "Drinks" },
     }}
 />
+
+
+<VerificationCode length={4} onCompletion={(code) => console.log(code)}/>

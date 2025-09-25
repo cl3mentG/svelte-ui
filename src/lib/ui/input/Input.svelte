@@ -3,13 +3,18 @@
     import { common, focusable, inputDefault } from "../styles";
     import { cn } from "../utils";
 
-    type InputProps = Omit<HTMLInputAttributes, 'class'> & {
-        class?: string; 
+    type InputProps = Omit<HTMLInputAttributes, "class"> & {
+        class?: string;
+        value?: string;
     };
 
-    let { class: cls = "", ...others }: InputProps = $props();
-    
+    let {
+        class: cls = "",
+        value = $bindable(),
+        ...others
+    }: InputProps = $props();
+
     let mergedClasses = $derived(cn(common, focusable, inputDefault, cls));
 </script>
 
-<input {...others} class={mergedClasses}/>
+<input {...others} class={mergedClasses} bind:value />

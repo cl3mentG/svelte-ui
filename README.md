@@ -46,9 +46,20 @@ Supports custom ordering, grouping options, custom snippet to render groups and 
 ## Roadmap
 | Component | Action | Status |
 |---| ---|---|
-|`Input`| Support regex validation |🚧|
-|`Input`| Prevent typing letters if does not match start of regex |🚧|
-|`NumberInput`| Prevent typing letters except 'e'|🚧|
-|`NumberInput`| Fix precision errors, round to nearest step|🚧|
+|`Input`| Support regex validation |✅|
+|`Input`| Prevent typing letters if does not match start of regex |✅|
+|`NumberInput`| Prevent typing letters except 'e'|✅|
+|`NumberInput`| Fix precision errors |✅|
+|`NumberInput`| Use either ',' or '.' as decimal separator|✅|
 |`Select`, `Search`, `Multisearch`| Create reusable dropdown menu|✅|
-|`Multisearch`| Create hidden inputs for form submission |🚧|
+|`Multisearch`| Create hidden inputs for form submission |✅|
+|`Multisearch`| Add props for min and max count |✅|
+|`DatePicker`| Create component |🚧|
+|`DateRangePicker`| Create component |🚧|
+|`ContextMenu`| Create component |🚧|
+|`ColorPicker`| Create component |🚧|
+|`Calendar`| Create component |🚧|
+|`Kanban`| Create component |🚧|
+|`Table`| Create component |🚧|
+|`VerificationCode`| Create component |✅|
+|`Tooltip`| Create component |🚧|

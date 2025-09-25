@@ -14,34 +14,49 @@
         min?: number;
         max?: number;
         step?: number;
+        decimalSeparator?: "." | ",";
     };
 
     let {
         class: cls = "",
-        value = $bindable(0),
+        value = $bindable(),
         step = 1,
         disabled = false,
         readonly = false,
         min,
         max,
         placeholder,
+        decimalSeparator = ".",
         ...restProps
     }: InputProps = $props();
 
-    let valueAsString = $state(value === 0 ? "" : (value?.toString() ?? ""));
+    let valueAsString = $state(
+        value === undefined
+            ? ""
+            : (value.toString().replace(".", decimalSeparator) ?? ""),
+    );
     let error = $state(false);
 
     let mergedClasses = $derived(cn(common, focusable, inputDefault, cls));
     let inputElement: HTMLInputElement;
 
     function roundToStep(num: number) {
-        return Math.round(num / step) * step;
+        const precision = step.toString().split(".")[1]?.length ?? 0;
+        return parseFloat((Math.round(num / step) * step).toFixed(precision));
     }
 
     let incrementTimeout: ReturnType<typeof setTimeout> | null = null;
     let decrementTimeout: ReturnType<typeof setTimeout> | null = null;
     let incrementInterval: ReturnType<typeof setInterval> | null = null;
     let decrementInterval: ReturnType<typeof setInterval> | null = null;
+
+    function formatWithSeparator(num: number): string {
+        let str = num.toString();
+        if (decimalSeparator === ",") {
+            str = str.replace(".", ",");
+        }
+        return str;
+    }
 
     function startIncrement(e: MouseEvent) {
         e.preventDefault();
@@ -92,7 +107,7 @@
         let newValue = roundToStep(currentValue + step);
         if (max !== undefined && newValue > maxValue) newValue = maxValue;
         value = newValue;
-        valueAsString = newValue.toString();
+        valueAsString = formatWithSeparator(newValue);
     }
 
     function decrement() {
@@ -102,43 +117,61 @@
         let newValue = roundToStep(currentValue - step);
         if (min !== undefined && newValue < minValue) newValue = minValue;
         value = newValue;
-        valueAsString = newValue.toString();
+        valueAsString = formatWithSeparator(newValue);
     }
 
-    function handleInput() {
-        if (valueAsString === "0" && inputElement.selectionStart === 1) {
-            valueAsString = "";
-        }
-        if (valueAsString === "") {
-            value = 0;
-            error = false;
+    // const completeRegex =
+    //     /^[+-]?(?:\d+|\d{1,3}(?: \d{1,3})*)(?:[.](?:\d+)?)?(?:[eE][+-]?\d+)?$/;
+
+    const incompleteRegex =
+        /^[+-]?(?:\d+|\d{1,3}(?: \d{1,3})*)?(?:[.](?:\d*)?)?(?:[eE][+-]?\d*)?$/;
+
+    function handleInput(newInputValue: string) {
+        if (newInputValue == "") {
+            value = undefined;
             return;
         }
-        const numValue = parseFloat(valueAsString);
+        newInputValue = newInputValue.replace(",", ".");
+        const numValue = parseFloat(newInputValue);
+
+        // validate format with regex first
+        if (!incompleteRegex.test(newInputValue)) {
+            inputElement.value = valueAsString;
+            return;
+        }
+
+        if (newInputValue == "-" || newInputValue == "+") {
+            valueAsString = newInputValue;
+        }
+
         if (
             !isNaN(numValue) &&
-            (max == null || numValue <= max) &&
-            (min == null || numValue >= min)
+            ((0 <= numValue &&
+                ((max !== undefined && numValue <= max) ||
+                    (min !== undefined && numValue <= min))) ||
+                (numValue <= 0 &&
+                    ((max !== undefined && numValue >= max) ||
+                        (min !== undefined && numValue >= min))))
         ) {
-            const snapped = roundToStep(numValue);
-            value = snapped;
-            valueAsString = snapped.toString();
-            if (error) error = false;
+            valueAsString = newInputValue.replace(".", decimalSeparator);
+            value = numValue;
         } else {
-            error = true;
+            inputElement.value = valueAsString;
         }
     }
 
     function handleBlur() {
-        if (valueAsString === "") {
-            value = 0;
+        const lastChar = valueAsString.slice(-1);
+        if (lastChar === "e" || lastChar === "." || lastChar === ",") {
+            valueAsString = valueAsString.slice(0, -1);
+            inputElement.value = valueAsString;
+        }
+
+        if (value !== undefined && ((min !== undefined && min > value) || ((max !== undefined && value > max))))
+        {
+            error = true;
         } else {
-            const numValue = parseFloat(valueAsString);
-            if (!isNaN(numValue)) {
-                const snapped = roundToStep(numValue);
-                value = snapped;
-                valueAsString = snapped.toString();
-            }
+            error = false;
         }
     }
 
@@ -159,8 +192,8 @@
 <div class="relative inline-flex items-center w-60 rounded-md">
     <input
         bind:this={inputElement}
-        bind:value={valueAsString}
-        oninput={handleInput}
+        value={valueAsString}
+        oninput={(e) => handleInput(e.currentTarget.value)}
         onblur={handleBlur}
         onkeydown={handleKeydown}
         {min}
@@ -172,7 +205,7 @@
         class={cn(
             mergedClasses,
             "pr-10 w-full rounded-md placeholder-gray-400",
-            error && "border-red-500 focus:ring-red-500",
+            error && "border-red-500",
         )}
     />
 

@@ -18,10 +18,15 @@
         CommonDropdownProps<Option, Group> & {
             value?: string[];
             noSearchIcon?: boolean;
+            minCount?: number;
+            maxCount?: number;
         };
 
     let {
         value = $bindable([]),
+
+        minCount = 0,
+        maxCount,
 
         class: cls = "",
         name,
@@ -51,6 +56,8 @@
     let childElement: HTMLDivElement;
     let inputElement: HTMLInputElement;
     let listboxId = "multisearch-listbox";
+
+    let error = $state(false);
 
     let groupedOptions = $derived(
         Object.entries(options).reduce<GroupedOptions<Option, Group>>(
@@ -86,10 +93,13 @@
         }
         search = "";
         isOpen = false;
-        inputElement.focus(); // keep input active for typing
 
         if (onSelect) {
             onSelect(optionKey);
+        }
+
+        if (maxCount === undefined || value.length < maxCount) {
+            inputElement.focus(); // keep input active for typing
         }
     }
 
@@ -101,6 +111,12 @@
 
     function handleBlur(e: FocusEvent) {
         if (!parentElement.contains(e.relatedTarget as Node)) {
+            console.log(value.length, minCount, maxCount);
+            if (value.length < minCount) {
+                error = true;
+            } else if (error) {
+                error = false;
+            }
             isOpen = false;
             isFocused = false;
         }
@@ -128,6 +144,7 @@
             mergedClasses,
             isFocused && multisearchFocused,
             "flex flex-wrap items-center gap-1 rounded-md cursor-text relative py-2 w-60",
+            error && "border-red-500",
         )}
         role="combobox"
         aria-expanded={isOpen}
@@ -151,7 +168,7 @@
             }
         }}
     >
-        {#each value as v}
+        {#each value as v, index (v)}
             {@const opt = options[v]}
             <span
                 class="flex items-center gap-1 bg-gray-100 text-gray-700 pl-2 pr-1 rounded-md"
@@ -165,6 +182,9 @@
                     <X class="w-5 h-5" />
                 </button>
             </span>
+            {#if name !== undefined}
+                <input hidden name={`${name}_${index}`} value={v} />
+            {/if}
         {/each}
 
         <div class="flex items-center gap-2 flex-1 min-w-[80px] shrink">
