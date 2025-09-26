@@ -3,6 +3,8 @@
     import { Input, NumberInput, RegexInput } from "$lib/ui/input";
     import { Select, Search, Multisearch } from "$lib/ui/dropdown";
     import { VerificationCode } from "$lib/ui/verification-code";
+    import { ToolTip } from "$lib/ui/tooltip";
+    import { ContextMenu } from "$lib/ui/context-menu";
 </script>
 
 <Button>Click here</Button>
@@ -91,5 +93,24 @@
     }}
 />
 
+<VerificationCode length={4} onCompletion={(code) => console.log(code)} />
 
-<VerificationCode length={4} onCompletion={(code) => console.log(code)}/>
+{#snippet popupSnippet()}
+    <div class="text-center">HELLO</div>
+{/snippet}
+
+<ToolTip {popupSnippet}>
+    <button>Tooltip TEST</button>
+</ToolTip>
+
+<ContextMenu
+    items={[{ test: "ra" }]}
+    class="bg-white border-2 border-gray-300 w-48 rounded p-1"
+>
+    <div>This is a div with text and it has a context menu</div>
+    {#snippet itemSnippet(item)}
+        <div class="text-left">
+            {item.test}
+        </div>
+    {/snippet}
+</ContextMenu>
