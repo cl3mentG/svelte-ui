@@ -9,7 +9,7 @@
     };
 
     let {
-        class: cls = "",
+        class: cls,
         value = $bindable(),
         ...others
     }: InputProps = $props();

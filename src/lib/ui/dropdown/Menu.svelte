@@ -1,5 +1,5 @@
 <script lang="ts" generics="Option extends BaseOption, Group extends BaseGroup">
-    import type { BaseGroup, BaseOption, CommonDropdownProps, GroupedOptions } from "../types";
+    import type { BaseGroup, BaseOption, CommonDropdownProps, GroupedOptions } from "./types";
     import { cn } from "../utils";
 
 

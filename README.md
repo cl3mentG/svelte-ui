@@ -54,12 +54,13 @@ Supports custom ordering, grouping options, custom snippet to render groups and 
 |`Select`, `Search`, `Multisearch`| Create reusable dropdown menu|✅|
 |`Multisearch`| Create hidden inputs for form submission |✅|
 |`Multisearch`| Add props for min and max count |✅|
-|`DatePicker`| Create component |🚧|
-|`DateRangePicker`| Create component |🚧|
+|`DatePicker`| Create component |✅|
+|`DateRangePicker`| Create component |✅|
 |`ContextMenu`| Create component |✅|
-|`ColorPicker`| Create component |🚧|
+|`ColorPicker`| Create component |✅|
 |`Calendar`| Create component |🚧|
 |`Kanban`| Create component |🚧|
 |`Table`| Create component |🚧|
 |`VerificationCode`| Create component |✅|
 |`Tooltip`| Create component |✅|
+|all| Refactor to allow user to set custom styles |🚧|

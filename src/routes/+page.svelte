@@ -5,6 +5,8 @@
     import { VerificationCode } from "$lib/ui/verification-code";
     import { ToolTip } from "$lib/ui/tooltip";
     import { ContextMenu } from "$lib/ui/context-menu";
+    import { DatePicker, DateRangePicker } from "$lib/ui/date";
+    import ColorPicker from "$lib/ui/color-picker/ColorPicker.svelte";
 </script>
 
 <Button>Click here</Button>
@@ -114,3 +116,7 @@
         </div>
     {/snippet}
 </ContextMenu>
+
+<DatePicker />
+<DateRangePicker/>
+<ColorPicker/>
