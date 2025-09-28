@@ -1,18 +1,15 @@
 <script lang="ts" generics="Option extends BaseOption, Group extends BaseGroup">
-    import { cn } from "../utils";
+    import { cn } from "../../utils";
     import { X } from "@lucide/svelte";
-    import { common, focusable, multisearchFocused } from "../styles";
     import type {
         BaseOption,
         BaseGroup,
         GroupedOptions,
         CommonDropdownProps,
-    } from "./types";
-    import type { CommonControlProps } from "../types";
-    import Menu from "./Menu.svelte";
-
-    type _CheckOption<T extends BaseOption> = T;
-    type _CheckGroup<T extends BaseGroup> = T;
+    } from "../types";
+    import type { CommonControlProps } from "../../types";
+    import Menu from "../shared/Menu.svelte";
+    import type { Snippet } from "svelte";
 
     type SearchSelectProps = CommonControlProps &
         CommonDropdownProps<Option, Group> & {
@@ -20,6 +17,11 @@
             noSearchIcon?: boolean;
             minCount?: number;
             maxCount?: number;
+            placeholder?: string;
+            triggerClass?: string;
+            contentClass?: string;
+            menuClass?: string;
+            selectedOptionSnippet: Snippet<[string, Option, (val: string, e?: MouseEvent) => void]>
         };
 
     let {
@@ -28,7 +30,10 @@
         minCount = 0,
         maxCount,
 
-        class: cls = "",
+        triggerClass,
+        class: cls,
+        contentClass,
+        menuClass,
         name,
         id,
         disabled,
@@ -38,8 +43,6 @@
         options,
         groups,
 
-        noSearchIcon = false,
-
         noResultLabel = "No results found.",
         onSelect,
 
@@ -47,6 +50,7 @@
         groupSnippet,
         sortOptions,
         sortGroups,
+        selectedOptionSnippet
     }: SearchSelectProps = $props();
 
     let isFocused = $state(false);
@@ -103,7 +107,7 @@
         }
     }
 
-    function removeOption(val: string | number, e?: MouseEvent) {
+    function removeOption(val: string, e?: MouseEvent) {
         e?.stopPropagation();
         value = value.filter((v) => v !== val);
         inputElement.focus();
@@ -129,8 +133,6 @@
             isFocused = false;
         }
     }
-
-    let mergedClasses = cn(common, cls);
 </script>
 
 <div
@@ -141,10 +143,8 @@
     <div
         bind:this={childElement}
         class={cn(
-            mergedClasses,
-            isFocused && multisearchFocused,
-            "flex flex-wrap items-center gap-1 rounded-md cursor-text relative py-2 w-60",
-            error && "border-red-500",
+            "flex flex-wrap items-center gap-1 rounded-md cursor-text relative",
+            triggerClass,
         )}
         role="combobox"
         aria-expanded={isOpen}
@@ -170,18 +170,8 @@
     >
         {#each value as v, index (v)}
             {@const opt = options[v]}
-            <span
-                class="flex items-center gap-1 bg-gray-100 text-gray-700 pl-2 pr-1 rounded-md"
-            >
-                {opt.label}
-                <button
-                    type="button"
-                    class="text-gray-500 hover:text-gray-700 cursor-pointer"
-                    onclick={(e) => removeOption(v, e)}
-                >
-                    <X class="w-5 h-5" />
-                </button>
-            </span>
+            {@render selectedOptionSnippet(v, options[v], removeOption)}
+           
             {#if name !== undefined}
                 <input hidden name={`${name}_${index}`} value={v} />
             {/if}
@@ -205,12 +195,13 @@
     </div>
 
     <Menu
+        {menuClass}
+        {contentClass}
         {options}
         {isOpen}
         {groupedOptions}
         {selectOption}
         {noResultLabel}
-        {placeholder}
         {groups}
         {optionSnippet}
         {groupSnippet}

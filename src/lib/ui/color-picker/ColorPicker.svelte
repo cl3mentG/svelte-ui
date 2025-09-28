@@ -1,6 +1,5 @@
 <script lang="ts">
     import { cn } from "../utils";
-    import { common, focusable } from "../styles";
 
     let isOpen = $state(false);
     let parentEl: HTMLDivElement;
@@ -77,11 +76,7 @@
 
 <div class="relative inline-flex items-center rounded-md" bind:this={parentEl}>
     <button
-        class={cn(
-            common,
-            focusable,
-            "py-2 px-4 flex items-center space-x-2 cursor-pointer",
-        )}
+        class={"py-2 px-4 flex items-center space-x-2 cursor-pointer"}
         onclick={() => (isOpen = !isOpen)}
     >
         <div

@@ -1,23 +1,38 @@
 <script lang="ts">
     import { SvelteDate } from "svelte/reactivity";
     import { cn } from "../utils";
-    import { common, focusable } from "../styles";
     import { Calendar, ChevronLeft, ChevronRight } from "@lucide/svelte";
+    import type { Snippet } from "svelte";
+
+    type DateRange = { start: Date | null; end: Date | null };
+    type DayStatus = {
+        isStart: boolean;
+        isEnd: boolean;
+        isInRange: boolean;
+        isSelectable: boolean;
+        isInMonth: boolean;
+    };
 
     type DatePickerProps = {
         placeholder?: string;
         isSelectable?: (date: Date) => boolean;
         minDate?: Date;
         maxDate?: Date;
+        locale?: string;
+        menuClass?: string;
+        triggerSnippet: Snippet<[string, DateRange]>;
+        dayCellSnippet: Snippet<[DayStatus, number]>;
     };
-
-    type DateRange = { start: Date | null; end: Date | null };
 
     let {
         placeholder = "Select a date",
         isSelectable,
         minDate,
         maxDate,
+        locale = navigator.language,
+        menuClass,
+        triggerSnippet,
+        dayCellSnippet,
     }: DatePickerProps = $props();
 
     // Current month/year state
@@ -143,34 +158,36 @@
             isOpen = false;
         }
     }
+
+    function getDayStatus(day: Date): DayStatus {
+        return {
+            isInRange:
+                range.start != null &&
+                day.getTime() >= range.start.getTime() &&
+                range.end != null &&
+                day.getTime() <= range.end.getTime(),
+            isStart:
+                range.start != null && range.start.getTime() == day.getTime(),
+            isEnd: range.end != null && range.end.getTime() == day.getTime(),
+            isSelectable: isSelectable === undefined || isSelectable(day),
+            isInMonth: day.getMonth() === currMonth,
+        };
+    }
 </script>
 
 <svelte:document onclick={handleClick} />
 
 <div class="relative inline-flex items-center rounded-md" bind:this={parentEl}>
-    <button
-        class={cn(
-            common,
-            focusable,
-            "py-2 px-2 flex items-center space-x-2 cursor-pointer",
-        )}
-        onclick={() => (isOpen = !isOpen)}
-    >
-        <Calendar class="w-5 h-5 text-gray-400" />
-        <span class={cn(!range.start && "text-gray-400")}>
-            {#if range.start && range.end}
-                {range.start.toLocaleDateString()} – {range.end.toLocaleDateString()}
-            {:else if range.start}
-                {range.start.toLocaleDateString()}
-            {:else}
-                {placeholder}
-            {/if}
-        </span>
+    <button onclick={() => (isOpen = !isOpen)}>
+        {@render triggerSnippet(locale, range)}
     </button>
 
     {#if isOpen}
         <div
-            class="flex flex-col absolute left-0 top-full rounded-md shadow-sm z-10 bg-white border-2 border-gray-300 overflow-hidden p-2 w-max"
+            class={cn(
+                "flex flex-col absolute left-0 top-full z-10 overflow-hidden ",
+                menuClass,
+            )}
         >
             <!-- Month Navigation -->
             <div class="flex justify-between items-center px-2 py-1">
@@ -189,19 +206,14 @@
             <!-- Calendar Days -->
             {#each daysBetween as week}
                 <div class="inline-grid grid-cols-7">
-                    {#each week as day}
+                    {#each week as day, dayIndex (dayIndex)}
+                        {@const status = getDayStatus(day)}
+
                         <button
-                            class={cn(
-                                "px-2 py-2 text-center rounded",
-                                day.getMonth() !== currMonth && "text-gray-400",
-                                isInRange(day) && "bg-blue-200",
-                                isDisabled(day) &&
-                                    "cursor-not-allowed opacity-50",
-                            )}
-                            disabled={isDisabled(day)}
+                            disabled={!status.isSelectable}
                             onclick={() => handleSelect(day)}
                         >
-                            {day.getDate()}
+                            {@render dayCellSnippet(status, day.getDate())}
                         </button>
                     {/each}
                 </div>

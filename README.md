@@ -46,8 +46,8 @@ Supports custom ordering, grouping options, custom snippet to render groups and 
 ## Roadmap
 | Component | Action | Status |
 |---| ---|---|
-|`Input`| Support regex validation |✅|
-|`Input`| Prevent typing letters if does not match start of regex |✅|
+|`RegexInput`| Support regex validation |✅|
+|`RegexInput`| Prevent typing letters if does not match start of regex |✅|
 |`NumberInput`| Prevent typing letters except 'e'|✅|
 |`NumberInput`| Fix precision errors |✅|
 |`NumberInput`| Use either ',' or '.' as decimal separator|✅|
@@ -63,4 +63,4 @@ Supports custom ordering, grouping options, custom snippet to render groups and 
 |`Table`| Create component |🚧|
 |`VerificationCode`| Create component |✅|
 |`Tooltip`| Create component |✅|
-|all| Refactor to allow user to set custom styles |🚧|
+|all| Refactor to allow user to set custom styles |`NumberInput` ✅|

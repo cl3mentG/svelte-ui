@@ -1,23 +1,19 @@
 <script lang="ts">
     import type { HTMLInputAttributes } from "svelte/elements";
-    import { common, focusable, inputDefault } from "../styles";
-    import { cn } from "../utils";
 
-    type InputProps = Omit<HTMLInputAttributes, "class"> & {
+    type InputProps = HTMLInputAttributes & {
         class?: string;
         validRegex: RegExp;
         completionRegex?: RegExp;
         value?: string;
-        onEnter?: (val: string) => void; // new prop for enter handling
     };
 
     let {
-        class: cls = "",
+        class: cls,
         value = $bindable(),
         validRegex,
         completionRegex,
-        onEnter,
-        ...others
+        ...restProps
     }: InputProps = $props();
 
     let inputValue = $derived(value);
@@ -44,16 +40,17 @@
 
     function handleKeyDown(event: KeyboardEvent) {
         if (event.key === "Enter") {
-           inputElement.blur();
+            inputElement.blur();
         }
     }
 </script>
 
 <input
     bind:this={inputElement}
-    {...others}
-    class={cn(common, focusable, inputDefault, cls, error && "border-red-500")}
+    {...restProps}
+    class={cls}
     value={inputValue}
+    data-error={error || undefined}
     oninput={(e) => handleInput(e.currentTarget.value)}
     onblur={handleBlur}
     onkeydown={handleKeyDown}

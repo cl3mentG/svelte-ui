@@ -1,22 +1,28 @@
 <script lang="ts">
     import { SvelteDate } from "svelte/reactivity";
     import { cn } from "../utils";
-    import { common, focusable } from "../styles";
     import { Calendar, ChevronLeft, ChevronRight } from "@lucide/svelte";
+    import type { Snippet } from "svelte";
 
     type DatePickerProps = {
         value?: SvelteDate;
-        placeholder?: string;
         isSelectable?: (date: Date) => boolean;
         minDate?: Date;
         maxDate?: Date;
+        triggerSnippet: Snippet<[string, SvelteDate | undefined]>;
+        dayCellSnippet: Snippet<[boolean, boolean, boolean, number]>;
+        menuClass?: string;
+        locale?: string;
     };
     let {
         value = $bindable(),
-        placeholder = "Select a date",
         isSelectable,
         minDate,
         maxDate,
+        menuClass,
+        locale = navigator.language,
+        triggerSnippet,
+        dayCellSnippet,
     }: DatePickerProps = $props();
 
     let currYear = $state(
@@ -68,7 +74,7 @@
         return weeks;
     }
 
-    function formatWeekDays(locale = navigator.language): string[] {
+    function formatWeekDays(): string[] {
         const formatter = new Intl.DateTimeFormat(locale, { weekday: "short" });
         const weekdays: string[] = [];
         for (let i = 0; i < 7; i++) {
@@ -80,7 +86,7 @@
         return weekdays;
     }
 
-    function formatDate(locale = navigator.language): string {
+    function formatDate(): string {
         if (value !== undefined) {
             const formatter = new Intl.DateTimeFormat(locale, {
                 day: "numeric",
@@ -92,7 +98,7 @@
         return "";
     }
 
-    function formatMonthYear(locale = navigator.language): string {
+    function formatMonthYear(): string {
         const formatter = new Intl.DateTimeFormat(locale, {
             month: "long",
             year: "numeric",
@@ -149,23 +155,16 @@
     class={"relative inline-flex items-center rounded-md"}
     bind:this={parentEl}
 >
-    <button
-        class={cn(
-            common,
-            focusable,
-            "py-2 px-2 flex items-center space-x-4 cursor-pointer"
-        )}
-        onclick={() => (isOpen = !isOpen)}
-    >
-        <Calendar class="w-5 h-5 text-gray-400" />
-        <span class={cn( value == undefined && "text-gray-400")}>
-            {value ? formatDate() : placeholder}
-        </span>
+    <button onclick={() => (isOpen = !isOpen)}>
+        {@render triggerSnippet(locale, value)}
     </button>
 
     {#if isOpen}
         <div
-            class="flex flex-col absolute left-0 top-full rounded-md shadow-sm z-10 bg-white border-2 border-gray-300 overflow-hidden p-2 w-max"
+            class={cn(
+                "flex flex-col absolute left-0 top-full z-10 overflow-hidden ",
+                menuClass,
+            )}
         >
             <div class="flex justify-between items-center space-x-4 px-2">
                 <button onclick={prevMonth}>
@@ -187,18 +186,15 @@
             {#each daysBetween as week, weekIndex (weekIndex)}
                 <div class="inline-grid grid-cols-7">
                     {#each week as day, dayIndex (dayIndex)}
-                        {@const notSelectable =
-                            isSelectable && !isSelectable(day)}
+                        {@const selectable =
+                            !isSelectable || isSelectable(day)}
+                        {@const isInMonth = currMonth === day.getMonth()}
+                        {@const isSelected = (value !== undefined && value.getTime() === day.getTime())}
                         <button
-                            class={cn(
-                                "px-1 py-2 text-center",
-                                day.getMonth() != currMonth && "text-gray-500",
-                                notSelectable && "cursor-not-allowed",
-                            )}
-                            disabled={notSelectable}
+                            disabled={!selectable}
                             onclick={() => handleSelect(day)}
                         >
-                            {day.getDate()}
+                            {@render dayCellSnippet(isInMonth, selectable, isSelected, day.getDate())}
                         </button>
                     {/each}
                 </div>

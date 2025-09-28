@@ -1,16 +1,14 @@
 <script lang="ts">
-    import { common, focusable } from "../styles";
-    import { cn } from "../utils";
-
     type VerificationCodeProps = {
-        class?: string;
+        inputClass?: string;
+        containerClass?: string;
         id?: string;
         name?: string;
         length: number;
         onCompletion: (code: string) => any;
     };
 
-    let { class: cls, id, name, length, onCompletion }: VerificationCodeProps = $props();
+    let { containerClass, inputClass, id, name, length, onCompletion }: VerificationCodeProps = $props();
 
     let values: string[] = $state(Array(length).fill(""));
     let inputs: HTMLInputElement[] = $state([]);
@@ -41,7 +39,7 @@
     }
 </script>
 
-<div class="space-x-4" id={id}>
+<div class={containerClass} id={id}>
     {#each Array.from({ length }, (_, i) => i) as i (i)}
         <input
             type="text"
@@ -50,11 +48,7 @@
             maxlength="1"
             bind:this={inputs[i]}
             bind:value={values[i]}
-            class={cn(
-                common,
-                focusable,
-                "w-16 text-xl aspect-square text-center",
-            )}
+            class={inputClass}
             oninput={(e) => handleInput(i, e)}
             onkeydown={(e) => handleKeydown(i, e)}
         />

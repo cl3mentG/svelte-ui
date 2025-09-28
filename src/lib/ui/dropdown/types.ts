@@ -18,7 +18,6 @@ export type CommonDropdownProps<
     Option extends BaseOption,
     Group extends BaseGroup
 > = {
-    placeholder?: string;
     noResultLabel?: string;
 
     options: Options<Option>;
@@ -26,7 +25,7 @@ export type CommonDropdownProps<
 
     onSelect?: (value: string) => void;
 
-    optionSnippet?: Snippet<[Option, boolean]>;
+    optionSnippet: Snippet<[Option, boolean]>;
     groupSnippet?: Snippet<[Group]>;
 
     sortOptions?: (a: Option, b: Option) => number;

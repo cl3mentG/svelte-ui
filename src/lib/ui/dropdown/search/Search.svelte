@@ -1,41 +1,42 @@
 <script lang="ts" generics="Option extends BaseOption, Group extends BaseGroup">
-    import { common, focusable, searchDefault } from "../styles";
-    import { cn } from "../utils";
-    import type { Snippet } from "svelte";
-    import { Search, X } from "@lucide/svelte";
-    import Menu from "./Menu.svelte";
+    import { cn } from "../../utils";
+    import Menu from "../shared/Menu.svelte";
     import type {
         BaseOption,
         BaseGroup,
         GroupedOptions,
         CommonDropdownProps,
-    } from "./types";
-    import type { CommonControlProps } from "../types";
+    } from "../types";
+    import type { CommonControlProps } from "../../types";
+    import type { Snippet } from "svelte";
 
-    type _CheckOption<T extends BaseOption> = T;
-    type _CheckGroup<T extends BaseGroup> = T;
-        
     type SearchSelectProps = CommonControlProps &
         CommonDropdownProps<Option, Group> & {
             value?: string;
             noSearchIcon?: boolean;
+            menuClass?: string;
+            contentClass?: string;
+            class?: string;
+            triggerSnippet: Snippet<[string | undefined, () => void]>,
+            placeholder?: string;
         };
-   
 
     let {
         value = $bindable(undefined),
 
-        class: cls = "",
         name,
         id,
+        placeholder,
         disabled,
         readonly,
 
-        placeholder = "Search",
         options,
         groups,
 
-        noSearchIcon = false,
+        class: cls,
+        menuClass,
+        contentClass,
+
 
         noResultLabel = "No results found.",
         onSelect,
@@ -44,6 +45,7 @@
         groupSnippet,
         sortOptions,
         sortGroups,
+        triggerSnippet,
     }: SearchSelectProps = $props();
 
     let isOpen = $state(false);
@@ -101,55 +103,40 @@
         }
     }
 
-    function resetValue(e: MouseEvent) {
+    function resetValue() {
         search = "";
         value = undefined;
     }
 
-    let mergedClasses = cn(common, focusable, searchDefault, cls);
 </script>
 
 <div
     bind:this={selectElement}
-    class={cn("relative inline-flex flex-col w-60", cls)}
+    class="relative inline-flex flex-col"
     onfocusout={handleBlur}
 >
-    <div class="relative flex items-center w-full">
+    <div class="relative inline-block">
         <input
-            type="text"
-            class={cn(
-                mergedClasses,
-                "pr-8 pl-9 w-full rounded-md text-left flex items-center cursor-text text-ellipsis",
-                noSearchIcon && value === null && "pl-4",
-            )}
-            {placeholder}
+            class={cn("focus:outline-none w-full", cls)}
             bind:value={search}
             onfocus={() => (isOpen = true)}
             onkeydown={handleKeydown}
             disabled={disabled || readonly}
+            {placeholder}
         />
-        {#if !noSearchIcon && value === undefined}
-            <Search
-                class="absolute left-2 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
-            />
-        {:else if value !== undefined}
-            <button
-                class="absolute left-2 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 cursor-pointer"
-                onclick={resetValue}
-            >
-                <X class="w-full h-full" />
-            </button>
-        {/if}
+        
+        {@render triggerSnippet(value, resetValue)}
     </div>
 
     <Menu
+        {menuClass}
+        {contentClass}
         {options}
         {isOpen}
         {groupedOptions}
         {selectOption}
         {noResultLabel}
         isSelected={(val: string) => value === val}
-        {placeholder}
         {groups}
         {optionSnippet}
         {groupSnippet}

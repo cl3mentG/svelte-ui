@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { common, focusable, inputDefault } from "../styles";
     import { ChevronDown, ChevronUp } from "@lucide/svelte";
-    import { cn } from "../utils";
+    import type { HTMLInputAttributes } from "svelte/elements";
 
     type InputProps = {
         class?: string;
@@ -15,7 +14,7 @@
         max?: number;
         step?: number;
         decimalSeparator?: "." | ",";
-    };
+    } & Omit<HTMLInputAttributes, "type" | "min" | "max">;
 
     let {
         class: cls = "",
@@ -37,7 +36,6 @@
     );
     let error = $state(false);
 
-    let mergedClasses = $derived(cn(common, focusable, inputDefault, cls));
     let inputElement: HTMLInputElement;
 
     function roundToStep(num: number) {
@@ -120,9 +118,6 @@
         valueAsString = formatWithSeparator(newValue);
     }
 
-    // const completeRegex =
-    //     /^[+-]?(?:\d+|\d{1,3}(?: \d{1,3})*)(?:[.](?:\d+)?)?(?:[eE][+-]?\d+)?$/;
-
     const incompleteRegex =
         /^[+-]?(?:\d+|\d{1,3}(?: \d{1,3})*)?(?:[.](?:\d*)?)?(?:[eE][+-]?\d*)?$/;
 
@@ -167,8 +162,11 @@
             inputElement.value = valueAsString;
         }
 
-        if (value !== undefined && ((min !== undefined && min > value) || ((max !== undefined && value > max))))
-        {
+        if (
+            value !== undefined &&
+            ((min !== undefined && min > value) ||
+                (max !== undefined && value > max))
+        ) {
             error = true;
         } else {
             error = false;
@@ -189,50 +187,48 @@
     }
 </script>
 
-<div class="relative inline-flex items-center w-60 rounded-md">
+<div class="relative w-fit">
     <input
         bind:this={inputElement}
         value={valueAsString}
         oninput={(e) => handleInput(e.currentTarget.value)}
         onblur={handleBlur}
         onkeydown={handleKeydown}
+        data-error={error || undefined}
         {min}
         {max}
         {step}
         {disabled}
         {readonly}
         {placeholder}
-        class={cn(
-            mergedClasses,
-            "pr-10 w-full rounded-md placeholder-gray-400",
-            error && "border-red-500",
-        )}
+        class={cls}
+        {...restProps}
     />
 
     <div
-        class="absolute right-1 top-1/2 transform -translate-y-1/2 flex flex-col space-y-0.5 text-gray-400"
+        class="absolute right-1 top-0 bottom-0 flex flex-col justify-between text-gray-400 space-y-0.5"
     >
         <button
             type="button"
             tabindex="-1"
-            class="flex items-center justify-center w-5 h-5 cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
+            class="h-1/2 min-h-0 flex items-center justify-center cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
             onmousedown={startIncrement}
             onmouseup={stopIncrement}
             onmouseleave={stopIncrement}
             disabled={disabled || readonly}
         >
-            <ChevronUp />
+            <ChevronUp class="h-full w-full min-w-5 min-h-5" />
         </button>
         <button
             type="button"
             tabindex="-1"
-            class="flex items-center justify-center w-5 h-5 cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
+            class="h-1/2 min-h-0 flex items-center justify-center cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
             onmousedown={startDecrement}
             onmouseup={stopDecrement}
             onmouseleave={stopDecrement}
             disabled={disabled || readonly}
         >
-            <ChevronDown />
+            <ChevronDown class="h-full w-full min-w-5 min-h-5" />
         </button>
     </div>
 </div>

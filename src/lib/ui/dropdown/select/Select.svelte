@@ -1,38 +1,52 @@
 <script lang="ts" generics="Option extends BaseOption, Group extends BaseGroup">
-    import { common, focusable, selectDefault } from "../styles";
-    import { ChevronDown, ChevronUp, Option } from "@lucide/svelte";
-    import { cn } from "../utils";
     import type {
         BaseOption,
         BaseGroup,
         GroupedOptions,
         CommonDropdownProps,
-    } from "./types";
-    import type { CommonControlProps } from "../types";
-    import Menu from "./Menu.svelte";
+        Groups,
+        Options,
+    } from "../types";
+    import Menu from "../shared/Menu.svelte";
+    import type { Snippet } from "svelte";
 
-    // Use them as constraints *inside* the file
-    type _CheckOption<T extends BaseOption> = T;
-    type _CheckGroup<T extends BaseGroup> = T;
+    type SelectProps = CommonDropdownProps<Option, Group> & {
+        value?: string;
+        name?: string;
+        id?: string;
+        disabled?: boolean;
+        readonly?: boolean;
+        menuClass?: string;
+        contentClass?: string;
+        triggerSnippet: Snippet<[Option | undefined, boolean]>;
+        noResultLabel?: string;
 
-    type SelectProps = CommonControlProps &
-        CommonDropdownProps<Option, Group> & {
-            value?: string;
-        };
+        options: Options<Option>;
+        groups?: Groups<Group>;
+
+        onSelect?: (value: string) => void;
+
+        optionSnippet: Snippet<[Option, boolean]>;
+        groupSnippet?: Snippet<[Group]>;
+
+        sortOptions?: (a: Option, b: Option) => number;
+        sortGroups?: (a: Group, b: Group) => number;
+    };
 
     let {
         value = $bindable(undefined),
 
-        class: cls,
+        menuClass,
+        contentClass,
         name,
         id,
         disabled,
         readonly,
 
-        placeholder = "Select an option",
         options,
         groups,
         onSelect,
+        triggerSnippet,
         optionSnippet,
         groupSnippet,
         sortOptions,
@@ -42,8 +56,7 @@
     let isOpen = $state(false);
     let error = $state(false);
 
-    let mergedClasses = $derived(cn(common, focusable, selectDefault, cls));
-    let selectElement: HTMLDivElement;
+    let parentElement: HTMLDivElement;
 
     // group options
     let groupedOptions = $derived(
@@ -65,11 +78,6 @@
         ),
     );
 
-    function toggleOpen() {
-        if (disabled || readonly) return;
-        isOpen = !isOpen;
-    }
-
     function selectOption(key: string) {
         value = key;
         isOpen = false;
@@ -79,73 +87,64 @@
         }
     }
 
-    function handleBlur(e: FocusEvent) {
-        if (!selectElement.contains(e.relatedTarget as Node)) {
-            isOpen = false;
-        }
-    }
-
     function handleKeydown(e: KeyboardEvent) {
         if (disabled || readonly) return;
         if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
             e.preventDefault();
-            toggleOpen();
+            toggleOpen(e);
         } else if (e.key === "Escape") {
             isOpen = false;
         }
     }
+
+    function handleClick(
+        event: MouseEvent & { currentTarget: EventTarget & Document },
+    ) {
+        if (!parentElement.contains(event.target as Node) && isOpen) {
+            isOpen = false;
+        }
+    }
+
+    function toggleOpen(event: Event) {
+        event.stopPropagation();
+        if (disabled || readonly) return;
+        isOpen = !isOpen;
+    }
 </script>
 
+<svelte:document onclick={handleClick} />
 <div
-    bind:this={selectElement}
-    class={cn("relative inline-flex items-center w-60 rounded-md", cls)}
+    bind:this={parentElement}
+    class="relative inline-flex"
     role="combobox"
     aria-controls="select-options"
     aria-haspopup="listbox"
     aria-expanded={isOpen}
     aria-disabled={disabled}
     aria-readonly={readonly}
-    onfocusout={handleBlur}
 >
     <button
         type="button"
-        class={cn(
-            mergedClasses,
-            "pr-8 w-full rounded-md text-left flex items-center cursor-pointer relative",
-            error && "border-red-500 focus:ring-red-500",
-        )}
         onclick={toggleOpen}
         onkeydown={handleKeydown}
         disabled={disabled || readonly}
         aria-controls="select-options"
         aria-expanded={isOpen}
     >
-        <span
-            class={cn(
-                value === "" ? "text-gray-400" : "",
-                "block overflow-hidden text-ellipsis whitespace-nowrap",
-            )}
-        >
-            {value ? options[value].label : placeholder}
-        </span>
-        <span
-            class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
-        >
-            {#if isOpen}
-                <ChevronUp class="shrink-0" />
-            {:else}
-                <ChevronDown class="shrink-0" />
-            {/if}
-        </span>
+        {@render triggerSnippet(
+            value === undefined ? undefined : options[value],
+            isOpen,
+        )}
     </button>
     <Menu
+        {menuClass}
+        {contentClass}
         {options}
         {isOpen}
         {groupedOptions}
         {selectOption}
         noResultLabel={"No option"}
         isSelected={(val: string) => value === val}
-        {placeholder}
         {groups}
         {optionSnippet}
         {groupSnippet}
