@@ -1,23 +1,10 @@
-<script lang="ts" generics="Option extends BaseOption, Group extends BaseGroup">
-    import type {
-        BaseGroup,
-        BaseOption,
-        CommonDropdownProps,
-        GroupedOptions,
-    } from "../types";
+<script
+    lang="ts"
+>
     import { cn } from "../../utils";
+    import type { MenuProps } from "./types";
 
-    type Props = CommonDropdownProps<Option, Group> & {
-        isOpen: boolean;
-        groupedOptions: GroupedOptions<Option, Group>;
-        selectOption: (optionValue: string, optionData: Option) => void;
-        isSelected: (value: string) => boolean;
-        noResultLabel: string;
-        contentClass?: string;
-        menuClass?: string;
-    };
-
-    let props: Props = $props();
+    let props: MenuProps = $props();
 </script>
 
 {#if props.isOpen}
@@ -32,10 +19,8 @@
         <div class={cn(props.contentClass, "overflow-y-scroll")}>
             <ul role="listbox">
                 {#if data.length == 0}
-                    <li
-                        class="px-3 py-1 text-gray-500 bg-white italic cursor-not-allowed"
-                    >
-                        {props.noResultLabel}
+                    <li>
+                        {@render props.noResultSnippet?.()}
                     </li>
                 {/if}
                 {#each data as [groupKey, groupData] (groupKey)}

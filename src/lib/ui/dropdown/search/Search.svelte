@@ -1,25 +1,9 @@
-<script lang="ts" generics="Option extends BaseOption, Group extends BaseGroup">
+<script lang="ts">
     import { cn } from "../../utils";
     import Menu from "../shared/Menu.svelte";
-    import type {
-        BaseOption,
-        BaseGroup,
-        GroupedOptions,
-        CommonDropdownProps,
-    } from "../types";
-    import type { CommonControlProps } from "../../types";
+    import type { GroupedOptions, Option } from "../types";
     import type { Snippet } from "svelte";
-
-    type SearchSelectProps = CommonControlProps &
-        CommonDropdownProps<Option, Group> & {
-            value?: string;
-            noSearchIcon?: boolean;
-            menuClass?: string;
-            contentClass?: string;
-            class?: string;
-            triggerSnippet: Snippet<[string | undefined, () => void]>,
-            placeholder?: string;
-        };
+    import type { SearchProps } from "./types";
 
     let {
         value = $bindable(undefined),
@@ -33,27 +17,26 @@
         options,
         groups,
 
-        class: cls,
+        inputClass,
         menuClass,
         contentClass,
 
-
-        noResultLabel = "No results found.",
         onSelect,
+        noResultSnippet,
 
         optionSnippet,
         groupSnippet,
         sortOptions,
         sortGroups,
         triggerSnippet,
-    }: SearchSelectProps = $props();
+    }: SearchProps = $props();
 
     let isOpen = $state(false);
     let search = $state("");
     let selectElement: HTMLDivElement;
 
     let groupedOptions = $derived(
-        Object.entries(options).reduce<GroupedOptions<Option, Group>>(
+        Object.entries(options).reduce<GroupedOptions>(
             (acc, [optionKey, opt]) => {
                 const groupKey = opt.group ?? "_ungrouped_";
 
@@ -107,7 +90,6 @@
         search = "";
         value = undefined;
     }
-
 </script>
 
 <div
@@ -117,15 +99,18 @@
 >
     <div class="relative inline-block">
         <input
-            class={cn("focus:outline-none w-full", cls)}
+            class={cn("focus:outline-none w-full", inputClass)}
             bind:value={search}
             onfocus={() => (isOpen = true)}
             onkeydown={handleKeydown}
             disabled={disabled || readonly}
             {placeholder}
         />
-        
-        {@render triggerSnippet(value, resetValue)}
+
+        {@render triggerSnippet(
+            value === undefined ? undefined : options[value],
+            resetValue,
+        )}
     </div>
 
     <Menu
@@ -135,7 +120,7 @@
         {isOpen}
         {groupedOptions}
         {selectOption}
-        {noResultLabel}
+        {noResultSnippet}
         isSelected={(val: string) => value === val}
         {groups}
         {optionSnippet}

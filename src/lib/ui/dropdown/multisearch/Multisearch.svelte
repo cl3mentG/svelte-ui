@@ -1,30 +1,10 @@
-<script lang="ts" generics="Option extends BaseOption, Group extends BaseGroup">
+<script
+    lang="ts"
+>
     import { cn } from "../../utils";
-    import { X } from "@lucide/svelte";
-    import type {
-        BaseOption,
-        BaseGroup,
-        GroupedOptions,
-        CommonDropdownProps,
-    } from "../types";
-    import type { CommonControlProps } from "../../types";
+    import type { GroupedOptions } from "../types";
     import Menu from "../shared/Menu.svelte";
-    import type { Snippet } from "svelte";
-
-    type SearchSelectProps = CommonControlProps &
-        CommonDropdownProps<Option, Group> & {
-            value?: string[];
-            noSearchIcon?: boolean;
-            minCount?: number;
-            maxCount?: number;
-            placeholder?: string;
-            triggerClass?: string;
-            contentClass?: string;
-            menuClass?: string;
-            selectedOptionSnippet: Snippet<
-                [string, Option, (val: string, e?: MouseEvent) => void]
-            >;
-        };
+    import type { MultisearchProps } from "./types";
 
     let {
         value = $bindable([]),
@@ -33,7 +13,6 @@
         maxCount,
 
         triggerClass,
-        class: cls,
         contentClass,
         menuClass,
         name,
@@ -45,15 +24,14 @@
         options,
         groups,
 
-        noResultLabel = "No results found.",
         onSelect,
-
+        noResultSnippet,
         optionSnippet,
         groupSnippet,
         sortOptions,
         sortGroups,
         selectedOptionSnippet,
-    }: SearchSelectProps = $props();
+    }: MultisearchProps = $props();
 
     let isFocused = $state(false);
     let isOpen = $state(false);
@@ -66,7 +44,7 @@
     let error = $state(false);
 
     let groupedOptions = $derived(
-        Object.entries(options).reduce<GroupedOptions<Option, Group>>(
+        Object.entries(options).reduce<GroupedOptions>(
             (acc, [optionKey, opt]) => {
                 const groupKey = opt.group ?? "_ungrouped_";
 
@@ -204,7 +182,7 @@
         {isOpen}
         {groupedOptions}
         {selectOption}
-        {noResultLabel}
+        {noResultSnippet}
         {groups}
         {optionSnippet}
         {groupSnippet}

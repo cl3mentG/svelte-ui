@@ -1,12 +1,9 @@
 import type { Snippet } from "svelte";
 
-export type BaseOption = { label: string; group?: string };
-export type BaseGroup = { label: string };
+export type Option =  Record<string, any> & { group?: string };
+export type Group = Record<string, any>;
 
-export type Options<Option extends BaseOption> = Record<string, Option>;
-export type Groups<Group extends BaseGroup> = Record<string, Group>;
-
-export type GroupedOptions<Option extends BaseOption, Group extends BaseGroup> = Record<
+export type GroupedOptions = Record<
     string,
     {
         options: Record<string, Option>;
@@ -14,16 +11,19 @@ export type GroupedOptions<Option extends BaseOption, Group extends BaseGroup> =
     }
 >;
 
-export type CommonDropdownProps<
-    Option extends BaseOption,
-    Group extends BaseGroup
-> = {
-    noResultLabel?: string;
+export type CommonControlProps = {
+    id?: string;
+    name?: string;
+    readonly?: boolean;
+    disabled?: boolean;
+}
 
-    options: Options<Option>;
-    groups?: Groups<Group>;
+export type CommonDropdownProps = {
+    contentClass?: string
+    menuClass?: string
 
-    onSelect?: (value: string) => void;
+    options: Record<string, Option>;
+    groups?: Record<string, Group>;
 
     optionSnippet: Snippet<[Option, boolean]>;
     groupSnippet?: Snippet<[Group]>;

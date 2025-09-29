@@ -1,37 +1,9 @@
-<script lang="ts" generics="Option extends BaseOption, Group extends BaseGroup">
-    import type {
-        BaseOption,
-        BaseGroup,
-        GroupedOptions,
-        CommonDropdownProps,
-        Groups,
-        Options,
-    } from "../types";
+<script
+    lang="ts"
+>
+    import type { GroupedOptions } from "../types";
     import Menu from "../shared/Menu.svelte";
-    import type { Snippet } from "svelte";
-
-    type SelectProps = CommonDropdownProps<Option, Group> & {
-        value?: string;
-        name?: string;
-        id?: string;
-        disabled?: boolean;
-        readonly?: boolean;
-        menuClass?: string;
-        contentClass?: string;
-        triggerSnippet: Snippet<[Option | undefined, boolean]>;
-        noResultLabel?: string;
-
-        options: Options<Option>;
-        groups?: Groups<Group>;
-
-        onSelect?: (value: string) => void;
-
-        optionSnippet: Snippet<[Option, boolean]>;
-        groupSnippet?: Snippet<[Group]>;
-
-        sortOptions?: (a: Option, b: Option) => number;
-        sortGroups?: (a: Group, b: Group) => number;
-    };
+    import type { SelectProps } from "./types";
 
     let {
         value = $bindable(undefined),
@@ -60,7 +32,7 @@
 
     // group options
     let groupedOptions = $derived(
-        Object.entries(options).reduce<GroupedOptions<Option, Group>>(
+        Object.entries(options).reduce<GroupedOptions>(
             (acc, [optionKey, opt]) => {
                 const groupKey = opt.group ?? "_ungrouped_";
 
@@ -136,6 +108,7 @@
             isOpen,
         )}
     </button>
+    <input {name} {id} {value} />
     <Menu
         {menuClass}
         {contentClass}
@@ -143,7 +116,6 @@
         {isOpen}
         {groupedOptions}
         {selectOption}
-        noResultLabel={"No option"}
         isSelected={(val: string) => value === val}
         {groups}
         {optionSnippet}

@@ -14,7 +14,6 @@
         Search as SearchIcon,
         Calendar,
     } from "@lucide/svelte";
-    import { SvelteDate } from "svelte/reactivity";
 </script>
 
 <NumberInput
@@ -87,10 +86,9 @@
 </Select>
 
 <Search
-    class="w-128 rounded-md px-4 border-2 border-gray-300 transition duration-200 outline-none focus:ring-2 focus:ring-blue-500 py-2 pl-9 error:border-red-500"
+    inputClass="w-128 rounded-md px-4 border-2 border-gray-300 transition duration-200 outline-none focus:ring-2 focus:ring-blue-500 py-2 pl-9 error:border-red-500"
     menuClass="rounded bg-white border-2 border-gray-300 shadow-md"
     contentClass="max-h-60"
-    noResultLabel="No results found."
     placeholder="Choose an option"
     options={{
         "1": { label: "Pancakes", group: "1" },
@@ -110,6 +108,9 @@
         "3": { label: "Drinks" },
     }}
 >
+    {#snippet noResultSnippet()}
+        <div>No result</div>
+    {/snippet}
     {#snippet groupSnippet(group)}
         <div class="text-sm italic px-2">{group.label}</div>
     {/snippet}
@@ -138,7 +139,6 @@
     contentClass="max-h-60"
     placeholder="Search"
     name="test"
-    noResultLabel="No results found."
     minCount={3}
     options={{
         "1": { label: "Pancakes", group: "1" },
@@ -158,12 +158,16 @@
         "3": { label: "Drinks" },
     }}
 >
+    {#snippet noResultSnippet()}
+        <div>No result</div>
+    {/snippet}
     {#snippet groupSnippet(group)}
         <div class="text-sm italic px-2">{group.label}</div>
     {/snippet}
     {#snippet optionSnippet(opt)}
         <div class="px-5">{opt.label}</div>
     {/snippet}
+
     {#snippet selectedOptionSnippet(value, details, removeOption)}
         <span
             class="flex items-center gap-1 bg-gray-100 text-gray-700 pl-2 pr-1 rounded-md"
@@ -285,9 +289,18 @@
     inputClass="rounded-md border-2 border-gray-300 transition duration-200 outline-none focus:ring-2 focus:ring-blue-500"
 >
     {#snippet triggerSnippet(color)}
-        <div class="flex items-center w-60 justify-between rounded-md px-4 border-2 border-gray-300 transition duration-200 outline-none focus:ring-2 focus:ring-blue-500 py-2">
-            <div class="w-10 h-5 rounded" style="background-color: {color.hexWithAlpha}"></div>
+        <div
+            class="flex items-center w-60 justify-between rounded-md px-4 border-2 border-gray-300 transition duration-200 outline-none focus:ring-2 focus:ring-blue-500 py-2"
+        >
+            <div
+                class="w-10 h-5 rounded"
+                style="background-color: {color.hexWithAlpha}"
+            ></div>
             <span>{color.hexWithAlpha}</span>
         </div>
     {/snippet}
 </ColorPicker>
+
+<div>
+    <input class="border rounded-full"/>
+</div> 
