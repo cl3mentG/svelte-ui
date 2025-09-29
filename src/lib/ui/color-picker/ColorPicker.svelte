@@ -1,113 +1,257 @@
 <script lang="ts">
+    import { Color } from "./types.svelte";
+    import type { Snippet } from "svelte";
     import { cn } from "../utils";
 
+    type Props = {
+        triggerSnippet: Snippet<[Color]>;
+        menuClass?: string;
+        noAlpha?: boolean;
+        inputClass?: string;
+        sliderTrackClass?: string;
+        sliderThumbClass?: string;
+        gradientTrackClass?: string;
+        gradientThumbClass?: string;
+    };
+
+    let {
+        triggerSnippet,
+        menuClass,
+        noAlpha,
+        inputClass,
+        sliderTrackClass,
+        sliderThumbClass,
+        gradientTrackClass,
+        gradientThumbClass,
+    }: Props = $props();
     let isOpen = $state(false);
+
     let parentEl: HTMLDivElement;
+    
+    // svelte-ignore non_reactive_update
+    let gradientDiv: HTMLDivElement;
+    // svelte-ignore non_reactive_update
+    let hueDiv: HTMLDivElement;
+    // svelte-ignore non_reactive_update
+    let alphaDiv: HTMLDivElement;
 
-    // Selected color in hex
-    let color = $state("#ff0000");
+    let color: Color = $state(new Color("#ff0000"));
+    let previousHexInput = $state(
+        noAlpha ? color.hexWithoutAlpha : color.hexWithAlpha,
+    );
 
-    // HSV values
-    let hue = $state(0); // 0-360
-    let saturation = $state(100); // 0-100
-    let value = $state(100); // 0-100
+    let draggingStatus = $state({ alpha: false, gradient: false, hue: false });
 
-    // Convert HSV to hex
-    function HSVtoRGB(h: number, s: number, v: number) {
-        s /= 100;
-        v /= 100;
-        let c = v * s;
-        let x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-        let m = v - c;
-        let r = 0,
-            g = 0,
-            b = 0;
+    function handleMouseMove(event: MouseEvent) {
+        const rectGradient = gradientDiv?.getBoundingClientRect();
+        const rectHue = hueDiv?.getBoundingClientRect();
+        const rectAlpha = alphaDiv?.getBoundingClientRect();
 
-        if (h < 60) [r, g, b] = [c, x, 0];
-        else if (h < 120) [r, g, b] = [x, c, 0];
-        else if (h < 180) [r, g, b] = [0, c, x];
-        else if (h < 240) [r, g, b] = [0, x, c];
-        else if (h < 300) [r, g, b] = [x, 0, c];
-        else [r, g, b] = [c, 0, x];
+        if (draggingStatus.gradient && rectGradient) {
+            let x = event.clientX - rectGradient.left;
+            let y = event.clientY - rectGradient.top;
 
-        r = Math.round((r + m) * 255);
-        g = Math.round((g + m) * 255);
-        b = Math.round((b + m) * 255);
+            x = Math.max(0, Math.min(rectGradient.width, x));
+            y = Math.max(0, Math.min(rectGradient.height, y));
 
-        return (
-            "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)
-        );
+            const s = x / rectGradient.width; // HSV saturation 0..1
+            const v = 1 - y / rectGradient.height; // Value 0..1, top = high
+
+            color.set({ sHsv: s, v: v });
+        } else if (draggingStatus.hue && rectHue) {
+            let y = event.clientY - rectHue.top;
+            y = Math.max(0, Math.min(rectHue.height, y));
+
+            const h = (y / rectHue.height) * 360;
+            color.set({ h: h });
+        } else if (draggingStatus.alpha && rectAlpha) {
+            let y = event.clientY - rectAlpha.top;
+            y = Math.max(0, Math.min(rectAlpha.height, y));
+
+            const a = 1 - y / rectAlpha.height;
+            color.set({ a: a });
+        }
     }
 
-    function updateColorFromHSV() {
-        color = HSVtoRGB(hue, saturation, value);
+    function handleGradientDown(event: MouseEvent) {
+        event.preventDefault();
+        draggingStatus.gradient = true;
+        handleMouseMove(event);
     }
 
-    function handleGradientClick(event: MouseEvent) {
-        const rect = (
-            event.currentTarget as HTMLElement
-        ).getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-
-        saturation = Math.min(100, Math.max(0, (x / rect.width) * 100));
-        value = Math.min(100, Math.max(0, 100 - (y / rect.height) * 100));
-        updateColorFromHSV();
+    function handleHueDown(event: MouseEvent) {
+        event.preventDefault();
+        draggingStatus.hue = true;
+        handleMouseMove(event);
     }
 
-    function handleHueChange(event: MouseEvent) {
-        const rect = (
-            event.currentTarget as HTMLElement
-        ).getBoundingClientRect();
-        const y = event.clientY - rect.top;
-        hue = Math.min(360, Math.max(0, (y / rect.height) * 360));
-        updateColorFromHSV();
+    function handleAlphaDown(event: MouseEvent) {
+        event.preventDefault();
+        draggingStatus.alpha = true;
+        handleMouseMove(event);
     }
 
-    function handleClickOutside(event: MouseEvent) {
-        const target = event.target as Node;
-        if (isOpen && parentEl && !parentEl.contains(target)) {
-            isOpen = false;
+    function handleMouseUp(
+        event: MouseEvent & { currentTarget: EventTarget & Document },
+    ) {
+        if (
+            !draggingStatus.alpha &&
+            !draggingStatus.gradient &&
+            !draggingStatus.hue
+        ) {
+            if (!parentEl.contains(event.target as Node)) {
+                isOpen = false;
+            }
+        } else {
+            draggingStatus.alpha = false;
+            draggingStatus.gradient = false;
+            draggingStatus.hue = false;
+        }
+    }
+
+    function handleInput(
+        event: Event & { currentTarget: EventTarget & HTMLInputElement },
+    ) {
+        const raw = event.currentTarget.value.trim().toLowerCase();
+
+        // Strict: RGB (6 digits) or RGBA (8 digits), optional leading #
+        const hexRegex = /^#?(?:[a-f0-9]{6}|[a-f0-9]{8})$/;
+
+        // Incomplete: hex digits
+        const incompleteRegex = /^#?(?:[a-f0-9]{0,8})$/;
+
+        if (!incompleteRegex.test(raw)) {
+            event.currentTarget.value = previousHexInput;
+            return;
+        }
+
+        let hex = raw;
+        if (!hex.startsWith("#")) {
+            hex = "#" + hex;
+        }
+        event.currentTarget.value = hex;
+        previousHexInput = hex;
+
+        if (hexRegex.test(raw)) {
+            if (hex.length === 7 && noAlpha) {
+                hex += "ff";
+                color.set({ hex: hex });
+                event.currentTarget.blur();
+            } else if (hex.length === 9) {
+                color.set({ hex: hex });
+                event.currentTarget.blur();
+            }
         }
     }
 </script>
 
-<svelte:document onclick={handleClickOutside} />
+<svelte:document onmouseup={handleMouseUp} onmousemove={handleMouseMove} />
 
 <div class="relative inline-flex items-center rounded-md" bind:this={parentEl}>
-    <button
-        class={"py-2 px-4 flex items-center space-x-2 cursor-pointer"}
-        onclick={() => (isOpen = !isOpen)}
-    >
-        <div
-            class="w-5 h-5 rounded border"
-            style="background-color: {color}"
-        ></div>
-        <span>{color}</span>
+    <button onclick={() => (isOpen = !isOpen)}>
+        {@render triggerSnippet(color)}
     </button>
 
     {#if isOpen}
         <div
-            class="absolute left-0 top-full mt-1 rounded-md shadow-lg z-10 bg-white border-2 border-gray-300 p-2 flex space-x-2"
+            class={cn(
+                "absolute left-0 top-full z-10 flex flex-col space-y-2 items-stretch",
+                menuClass,
+            )}
         >
-            <!-- Gradient rectangle -->
-            <div
-                class="relative w-64 h-40 cursor-crosshair rounded"
-                style="background: hsl({hue}, 100%, 50%);"
-                onclick={handleGradientClick}
-            >
+            <div class="flex space-x-2">
+                <!-- Gradient rectangle -->
                 <div
-                    class="absolute inset-0 rounded"
-                    style="background: linear-gradient(to right, #fff, rgba(255,255,255,0)), linear-gradient(to top, #000, rgba(0,0,0,0));"
-                ></div>
+                    role="slider"
+                    aria-valuenow={color.sHsv * 100 * (1 - color.v) * 100}
+                    tabindex="0"
+                    aria-valuetext={`Saturation: ${color.sHsv * 100}, Value: ${(1 - color.v) * 100}`}
+                    class={cn(
+                        "gradient-rect relative aspect-square flex-1 cursor-crosshair rounded",
+                        gradientTrackClass,
+                    )}
+                    style="background: hsl({color.h}, 100%, 50%);"
+                    onmousedown={handleGradientDown}
+                    bind:this={gradientDiv}
+                >
+                    <div
+                        class="absolute inset-0 rounded"
+                        style="background: 
+                        linear-gradient(to top, #000, transparent),
+                        linear-gradient(to right, #fff, transparent);"
+                    ></div>
+
+                    <div
+                        class={cn(
+                            "absolute w-4 h-4 rounded-full border-2 border-white shadow pointer-events-none",
+                            gradientThumbClass,
+                        )}
+                        style="
+                        left: calc({color.sHsv * 100}% - 0.5rem);
+                        top: calc({(1 - color.v) * 100}% - 0.5rem);
+                        background: {color};
+                    "
+                    ></div>
+                </div>
+
+                <!-- Hue slider -->
+                <div
+                    role="slider"
+                    tabindex="0"
+                    aria-valuenow={(color.h / 360) * 100}
+                    class={cn(
+                        "alpha-slider relative w-6 rounded cursor-pointer",
+                        sliderTrackClass,
+                    )}
+                    style="background: linear-gradient(to bottom, red, yellow, lime, cyan, blue, magenta, red);"
+                    onmousedown={handleHueDown}
+                    bind:this={hueDiv}
+                >
+                    <div
+                        class={cn(
+                            "absolute left-1/2 w-8 h-2 -translate-x-1/2 rounded bg-white border border-gray-400 shadow",
+                            sliderThumbClass,
+                        )}
+                        style="top: calc({(color.h / 360) * 100}% - 0.25rem);"
+                    ></div>
+                </div>
+
+                <!-- Alpha slider -->
+                {#if !noAlpha}
+                    <div
+                        role="slider"
+                        tabindex="0"
+                        aria-valuenow={(1 - color.a) * 100}
+                        class={cn(
+                            "alpha-slider relative w-6 rounded cursor-pointer",
+                            sliderTrackClass,
+                        )}
+                        style="background: 
+                    linear-gradient(to top, rgba(0,0,0,0), rgba(0,0,0,1)),
+                    repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%) 50% / 16px 16px"
+                        onmousedown={handleAlphaDown}
+                        bind:this={alphaDiv}
+                    >
+                        <div
+                            class={cn(
+                                "absolute left-1/2 w-8 h-2 -translate-x-1/2 rounded bg-white border border-gray-400 shadow",
+                                sliderThumbClass,
+                            )}
+                            style="top: calc({(1 - color.a) * 100}% - 0.25rem);"
+                        ></div>
+                    </div>
+                {/if}
             </div>
 
-            <!-- Hue slider -->
-            <div
-                class="w-6 h-40 rounded cursor-pointer"
-                style="background: linear-gradient(to top, red, yellow, lime, cyan, blue, magenta, red);"
-                onclick={handleHueChange}
-            ></div>
+            <div class="flex items-center space-x-2">
+                <label for="hex">hex</label>
+                <input
+                    class={cn("w-full", inputClass)}
+                    id="hex"
+                    value={noAlpha ? color.hexWithoutAlpha : color.hexWithAlpha}
+                    oninput={handleInput}
+                />
+            </div>
         </div>
     {/if}
 </div>

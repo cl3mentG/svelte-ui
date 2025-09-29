@@ -21,7 +21,9 @@
             triggerClass?: string;
             contentClass?: string;
             menuClass?: string;
-            selectedOptionSnippet: Snippet<[string, Option, (val: string, e?: MouseEvent) => void]>
+            selectedOptionSnippet: Snippet<
+                [string, Option, (val: string, e?: MouseEvent) => void]
+            >;
         };
 
     let {
@@ -50,7 +52,7 @@
         groupSnippet,
         sortOptions,
         sortGroups,
-        selectedOptionSnippet
+        selectedOptionSnippet,
     }: SearchSelectProps = $props();
 
     let isFocused = $state(false);
@@ -146,6 +148,7 @@
             "flex flex-wrap items-center gap-1 rounded-md cursor-text relative",
             triggerClass,
         )}
+        data-error={error || undefined}
         role="combobox"
         aria-expanded={isOpen}
         aria-controls={listboxId}
@@ -171,7 +174,7 @@
         {#each value as v, index (v)}
             {@const opt = options[v]}
             {@render selectedOptionSnippet(v, options[v], removeOption)}
-           
+
             {#if name !== undefined}
                 <input hidden name={`${name}_${index}`} value={v} />
             {/if}

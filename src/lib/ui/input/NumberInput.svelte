@@ -14,6 +14,7 @@
         max?: number;
         step?: number;
         decimalSeparator?: "." | ",";
+        noButton?: boolean;
     } & Omit<HTMLInputAttributes, "type" | "min" | "max">;
 
     let {
@@ -26,6 +27,7 @@
         max,
         placeholder,
         decimalSeparator = ".",
+        noButton,
         ...restProps
     }: InputProps = $props();
 
@@ -205,30 +207,32 @@
         {...restProps}
     />
 
-    <div
-        class="absolute right-1 top-0 bottom-0 flex flex-col justify-between text-gray-400 space-y-0.5"
-    >
-        <button
-            type="button"
-            tabindex="-1"
-            class="h-1/2 min-h-0 flex items-center justify-center cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
-            onmousedown={startIncrement}
-            onmouseup={stopIncrement}
-            onmouseleave={stopIncrement}
-            disabled={disabled || readonly}
+    {#if noButton}
+        <div
+            class="absolute right-1 top-0 bottom-0 flex flex-col justify-between text-gray-400 space-y-0.5"
         >
-            <ChevronUp class="h-full w-full min-w-5 min-h-5" />
-        </button>
-        <button
-            type="button"
-            tabindex="-1"
-            class="h-1/2 min-h-0 flex items-center justify-center cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
-            onmousedown={startDecrement}
-            onmouseup={stopDecrement}
-            onmouseleave={stopDecrement}
-            disabled={disabled || readonly}
-        >
-            <ChevronDown class="h-full w-full min-w-5 min-h-5" />
-        </button>
-    </div>
+            <button
+                type="button"
+                tabindex="-1"
+                class="h-1/2 min-h-0 flex items-center justify-center cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
+                onmousedown={startIncrement}
+                onmouseup={stopIncrement}
+                onmouseleave={stopIncrement}
+                disabled={disabled || readonly}
+            >
+                <ChevronUp class="h-full w-full min-w-5 min-h-5" />
+            </button>
+            <button
+                type="button"
+                tabindex="-1"
+                class="h-1/2 min-h-0 flex items-center justify-center cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
+                onmousedown={startDecrement}
+                onmouseup={stopDecrement}
+                onmouseleave={stopDecrement}
+                disabled={disabled || readonly}
+            >
+                <ChevronDown class="h-full w-full min-w-5 min-h-5" />
+            </button>
+        </div>
+    {/if}
 </div>

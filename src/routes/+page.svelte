@@ -180,7 +180,12 @@
     {/snippet}
 </Multisearch>
 
-<VerificationCode length={4} onCompletion={(code) => console.log(code)} />
+<VerificationCode
+    length={4}
+    onCompletion={(code) => console.log(code)}
+    containerClass="flex items-center space-x-4"
+    inputClass="rounded border-2 border-gray-300 transition duration-200 outline-none focus:ring-2 focus:ring-blue-500 w-16 h-16 text-center text-xl"
+/>
 
 {#snippet popupSnippet()}
     <div class="text-center">HELLO</div>
@@ -250,7 +255,9 @@
             <Calendar class="w-5 h-5 text-gray-400" />
             <span class={cn(!range.start && "text-gray-400")}>
                 {#if range.start && range.end}
-                    {formatter.format(range.start)} – {formatter.format(range.end)}
+                    {formatter.format(range.start)} – {formatter.format(
+                        range.end,
+                    )}
                 {:else if range.start}
                     {formatter.format(range.start)}
                 {:else}
@@ -273,4 +280,14 @@
         </div>
     {/snippet}
 </DateRangePicker>
-<!-- <ColorPicker /> -->
+<ColorPicker
+    menuClass="rounded-md w-full shadow-lg bg-white border-2 border-gray-300 p-2 "
+    inputClass="rounded-md border-2 border-gray-300 transition duration-200 outline-none focus:ring-2 focus:ring-blue-500"
+>
+    {#snippet triggerSnippet(color)}
+        <div class="flex items-center w-60 justify-between rounded-md px-4 border-2 border-gray-300 transition duration-200 outline-none focus:ring-2 focus:ring-blue-500 py-2">
+            <div class="w-10 h-5 rounded" style="background-color: {color.hexWithAlpha}"></div>
+            <span>{color.hexWithAlpha}</span>
+        </div>
+    {/snippet}
+</ColorPicker>

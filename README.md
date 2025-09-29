@@ -56,7 +56,7 @@ Supports custom ordering, grouping options, custom snippet to render groups and 
 |`Multisearch`| Add props for min and max count |✅|
 |`DatePicker`| Create component |✅|
 |`DateRangePicker`| Create component |✅|
-|`ContextMenu`| Create component |✅|
+|`ContextMenu`| Create component |🚧|
 |`ColorPicker`| Create component |✅|
 |`Calendar`| Create component |🚧|
 |`Kanban`| Create component |🚧|

@@ -132,6 +132,7 @@
                 range = { start: day, end: range.start };
             } else {
                 range.end = day;
+                isOpen = false;
             }
         }
     }
