@@ -168,7 +168,7 @@
         <div class="px-5">{opt.label}</div>
     {/snippet}
 
-    {#snippet selectedOptionSnippet(value, details, removeOption)}
+    {#snippet selectedOptionSnippet(details, removeOption)}
         <span
             class="flex items-center gap-1 bg-gray-100 text-gray-700 pl-2 pr-1 rounded-md"
         >
@@ -176,7 +176,7 @@
             <button
                 type="button"
                 class="text-gray-500 hover:text-gray-700 cursor-pointer"
-                onclick={(e) => removeOption(value, e)}
+                onclick={(e) => removeOption()}
             >
                 <X class="w-5 h-5" />
             </button>
@@ -230,15 +230,15 @@
             </span>
         </div>
     {/snippet}
-    {#snippet dayCellSnippet(isInMonth, isSelectable, isSelected, day)}
+    {#snippet dayCellSnippet(dayStatus, day)}
         <div
             class={cn(
                 "py-2 px-1",
-                (!isInMonth || !isSelectable) && "text-gray-400",
-                isSelected && "rounded-md bg-gray-400",
+                (!dayStatus.isInMonth || !dayStatus.isSelectable) && "text-gray-400",
+                dayStatus.isSelected && "rounded-md bg-gray-400",
             )}
         >
-            {day}
+            {day.getDate()}
         </div>
     {/snippet}
 </DatePicker>
@@ -280,7 +280,7 @@
                 status.isEnd && "rounded-r bg-gray-400",
             )}
         >
-            {day}
+            {day.getDate()}
         </div>
     {/snippet}
 </DateRangePicker>
@@ -301,6 +301,3 @@
     {/snippet}
 </ColorPicker>
 
-<div>
-    <input class="border rounded-full"/>
-</div> 

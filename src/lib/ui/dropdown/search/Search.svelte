@@ -2,7 +2,6 @@
     import { cn } from "../../utils";
     import Menu from "../shared/Menu.svelte";
     import type { GroupedOptions, Option } from "../types";
-    import type { Snippet } from "svelte";
     import type { SearchProps } from "./types";
 
     let {
@@ -89,6 +88,20 @@
     function resetValue() {
         search = "";
         value = undefined;
+        if (onSelect) {
+            onSelect(value);
+        }
+    }
+
+    function handleInput(
+        event: Event & { currentTarget: EventTarget & HTMLInputElement },
+    ) {
+        if (value !== undefined) {
+            value = undefined;
+            if (onSelect) {
+                onSelect(value);
+            }
+        }
     }
 </script>
 
@@ -103,6 +116,7 @@
             bind:value={search}
             onfocus={() => (isOpen = true)}
             onkeydown={handleKeydown}
+            oninput={handleInput}
             disabled={disabled || readonly}
             {placeholder}
         />
@@ -112,6 +126,7 @@
             resetValue,
         )}
     </div>
+    <input hidden {value} {name} />
 
     <Menu
         {menuClass}

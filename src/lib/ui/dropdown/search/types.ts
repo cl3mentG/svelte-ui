@@ -7,8 +7,6 @@ export type SearchProps = CommonControlProps & CommonDropdownProps & {
     placeholder?: string;
     inputClass?: string;
     noResultSnippet: Snippet;
-    onSelect?: (val: string) => void;
-    onDeselect?: () => void;
-
+    onSelect?: (val: string | undefined) => void;
     triggerSnippet: Snippet<[Option | undefined, () => void]>
 }

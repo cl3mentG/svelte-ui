@@ -1,39 +1,15 @@
 <script lang="ts">
-    import { SvelteDate } from "svelte/reactivity";
-    import { cn } from "../utils";
-    import { Calendar, ChevronLeft, ChevronRight } from "@lucide/svelte";
-    import type { Snippet } from "svelte";
-
-    type DateRange = { start: Date | null; end: Date | null };
-    type DayStatus = {
-        isStart: boolean;
-        isEnd: boolean;
-        isInRange: boolean;
-        isSelectable: boolean;
-        isInMonth: boolean;
-    };
-
-    type DatePickerProps = {
-        placeholder?: string;
-        isSelectable?: (date: Date) => boolean;
-        minDate?: Date;
-        maxDate?: Date;
-        locale?: string;
-        menuClass?: string;
-        triggerSnippet: Snippet<[string, DateRange]>;
-        dayCellSnippet: Snippet<[DayStatus, number]>;
-    };
+    import { cn } from "../../utils";
+    import { ChevronLeft, ChevronRight } from "@lucide/svelte";
+    import type { DateRange, DaterangepickerProps, DayRangeStatus } from "./types";
 
     let {
-        placeholder = "Select a date",
         isSelectable,
-        minDate,
-        maxDate,
         locale = navigator.language,
         menuClass,
         triggerSnippet,
         dayCellSnippet,
-    }: DatePickerProps = $props();
+    }: DaterangepickerProps = $props();
 
     // Current month/year state
     let currYear = $state(new Date().getFullYear());
@@ -136,22 +112,7 @@
             }
         }
     }
-
-    // Check if day is in selected range
-    function isInRange(day: Date) {
-        if (!range.start) return false;
-        if (!range.end) return range.start.getTime() === day.getTime();
-        return day >= range.start && day <= range.end;
-    }
-
-    // Disable out-of-range or not-selectable dates
-    function isDisabled(day: Date) {
-        if (minDate && day < minDate) return true;
-        if (maxDate && day > maxDate) return true;
-        if (isSelectable && !isSelectable(day)) return true;
-        return false;
-    }
-
+    
     // Close popup when clicking outside
     function handleClick(event: MouseEvent) {
         const target = event.target as Node;
@@ -160,7 +121,7 @@
         }
     }
 
-    function getDayStatus(day: Date): DayStatus {
+    function getDayStatus(day: Date): DayRangeStatus {
         return {
             isInRange:
                 range.start != null &&
@@ -214,7 +175,7 @@
                             disabled={!status.isSelectable}
                             onclick={() => handleSelect(day)}
                         >
-                            {@render dayCellSnippet(status, day.getDate())}
+                            {@render dayCellSnippet(status, day)}
                         </button>
                     {/each}
                 </div>

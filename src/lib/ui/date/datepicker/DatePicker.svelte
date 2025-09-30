@@ -1,29 +1,17 @@
 <script lang="ts">
     import { SvelteDate } from "svelte/reactivity";
-    import { cn } from "../utils";
-    import { Calendar, ChevronLeft, ChevronRight } from "@lucide/svelte";
-    import type { Snippet } from "svelte";
+    import { cn } from "../../utils";
+    import { ChevronLeft, ChevronRight } from "@lucide/svelte";
+    import type { DatepickerProps, DayStatus } from "./types";
 
-    type DatePickerProps = {
-        value?: SvelteDate;
-        isSelectable?: (date: Date) => boolean;
-        minDate?: Date;
-        maxDate?: Date;
-        triggerSnippet: Snippet<[string, SvelteDate | undefined]>;
-        dayCellSnippet: Snippet<[boolean, boolean, boolean, number]>;
-        menuClass?: string;
-        locale?: string;
-    };
     let {
         value = $bindable(),
         isSelectable,
-        minDate,
-        maxDate,
         menuClass,
         locale = navigator.language,
         triggerSnippet,
         dayCellSnippet,
-    }: DatePickerProps = $props();
+    }: DatepickerProps = $props();
 
     let currYear = $state(
         value ? value.getFullYear() : new Date().getFullYear(),
@@ -148,6 +136,14 @@
             isOpen = false;
         }
     }
+
+     function getDayStatus(day: Date): DayStatus {
+        return {
+            isSelected: value !== undefined && day.getTime() === value.getTime(),
+            isSelectable: isSelectable === undefined || isSelectable(day),
+            isInMonth: day.getMonth() === currMonth,
+        };
+    }
 </script>
 
 <svelte:document onclick={handleClick} />
@@ -186,15 +182,12 @@
             {#each daysBetween as week, weekIndex (weekIndex)}
                 <div class="inline-grid grid-cols-7">
                     {#each week as day, dayIndex (dayIndex)}
-                        {@const selectable =
-                            !isSelectable || isSelectable(day)}
-                        {@const isInMonth = currMonth === day.getMonth()}
-                        {@const isSelected = (value !== undefined && value.getTime() === day.getTime())}
+                        {@const status = getDayStatus(day)}
                         <button
-                            disabled={!selectable}
+                            disabled={!status.isSelectable}
                             onclick={() => handleSelect(day)}
                         >
-                            {@render dayCellSnippet(isInMonth, selectable, isSelected, day.getDate())}
+                            {@render dayCellSnippet(status, day)}
                         </button>
                     {/each}
                 </div>

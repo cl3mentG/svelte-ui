@@ -9,7 +9,6 @@ export type MultisearchProps = CommonControlProps & CommonDropdownProps & {
     placeholder?: string;
     noResultSnippet: Snippet;
     onSelect?: (val: string) => void;
-
-    selectedOptionSnippet: Snippet<[string, Option, (val: string, event: MouseEvent) => void]>;
+    selectedOptionSnippet: Snippet<[Option, () => void]>;
     triggerClass?: string;
 }

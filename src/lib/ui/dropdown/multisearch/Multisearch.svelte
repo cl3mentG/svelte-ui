@@ -151,7 +151,7 @@
     >
         {#each value as v, index (v)}
             {@const opt = options[v]}
-            {@render selectedOptionSnippet(v, options[v], removeOption)}
+            {@render selectedOptionSnippet(options[v], () => removeOption(v))}
 
             {#if name !== undefined}
                 <input hidden name={`${name}_${index}`} value={v} />
