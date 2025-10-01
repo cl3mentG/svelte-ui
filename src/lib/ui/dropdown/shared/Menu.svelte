@@ -26,13 +26,13 @@
                 {#each data as [groupKey, groupData] (groupKey)}
                     {#if groupKey !== "_ungrouped_" && props.groups != undefined}
                         {#if props.groupSnippet && groupData.groupProps}
-                            <li class="p-1">
+                            <li >
                                 {@render props.groupSnippet(
                                     groupData.groupProps,
                                 )}
                             </li>
                         {:else}
-                            <li class="p-1">
+                            <li>
                                 {groupData.groupProps?.label}
                             </li>
                         {/if}
@@ -43,7 +43,6 @@
                         <li
                             role="option"
                             aria-selected={isSelected}
-                            class="p-1"
                         >
                             <button
                                 class="w-full text-left"

@@ -1,6 +1,4 @@
-<script
-    lang="ts"
->
+<script lang="ts">
     import type { GroupedOptions } from "../types";
     import Menu from "../shared/Menu.svelte";
     import type { SelectProps } from "./types";
@@ -14,6 +12,7 @@
         id,
         disabled,
         readonly,
+        required,
 
         options,
         groups,
@@ -74,6 +73,12 @@
     ) {
         if (!parentElement.contains(event.target as Node) && isOpen) {
             isOpen = false;
+            if (value === undefined && required) {
+                error = true;
+            } else if (error === true)
+            {
+                error = false;
+            }
         }
     }
 
@@ -81,6 +86,15 @@
         event.stopPropagation();
         if (disabled || readonly) return;
         isOpen = !isOpen;
+    }
+
+    function handleBlur(
+        event: FocusEvent & { currentTarget: EventTarget & HTMLDivElement },
+    ) {
+        const next = event.relatedTarget as Node | null;
+        if (next && !parentElement.contains(next)) {
+            isOpen = false;
+        }
     }
 </script>
 
@@ -94,6 +108,7 @@
     aria-expanded={isOpen}
     aria-disabled={disabled}
     aria-readonly={readonly}
+    onfocusout={handleBlur}
 >
     <button
         type="button"
@@ -103,12 +118,13 @@
         aria-controls="select-options"
         aria-expanded={isOpen}
     >
-        {@render triggerSnippet(
-            value === undefined ? undefined : options[value],
-            isOpen,
-        )}
+        {@render triggerSnippet({
+            selectedOption: value === undefined ? undefined : options[value],
+            isOpen: isOpen,
+            error: error,
+        })}
     </button>
-    <input {name} {id} {value} />
+    <input hidden {name} {id} {value} />
     <Menu
         {menuClass}
         {contentClass}

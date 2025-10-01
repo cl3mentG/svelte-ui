@@ -11,13 +11,6 @@ export type GroupedOptions = Record<
     }
 >;
 
-export type CommonControlProps = {
-    id?: string;
-    name?: string;
-    readonly?: boolean;
-    disabled?: boolean;
-}
-
 export type CommonDropdownProps = {
     contentClass?: string
     menuClass?: string

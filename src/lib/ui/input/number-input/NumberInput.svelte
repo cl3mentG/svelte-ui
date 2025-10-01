@@ -1,21 +1,5 @@
 <script lang="ts">
-    import { ChevronDown, ChevronUp } from "@lucide/svelte";
-    import type { HTMLInputAttributes } from "svelte/elements";
-
-    type InputProps = {
-        class?: string;
-        id?: string;
-        name?: string;
-        value?: number;
-        placeholder?: string;
-        disabled?: boolean;
-        readonly?: boolean;
-        min?: number;
-        max?: number;
-        step?: number;
-        decimalSeparator?: "." | ",";
-        noButton?: boolean;
-    } & Omit<HTMLInputAttributes, "type" | "min" | "max">;
+    import type { NumberInputProps } from "./types";
 
     let {
         class: cls = "",
@@ -27,9 +11,10 @@
         max,
         placeholder,
         decimalSeparator = ".",
-        noButton,
+        required,
+        buttonsSnippet,
         ...restProps
-    }: InputProps = $props();
+    }: NumberInputProps = $props();
 
     let valueAsString = $state(
         value === undefined
@@ -165,9 +150,10 @@
         }
 
         if (
-            value !== undefined &&
-            ((min !== undefined && min > value) ||
-                (max !== undefined && value > max))
+            (value === undefined && required) ||
+            (value !== undefined &&
+                ((min !== undefined && min > value) ||
+                    (max !== undefined && value > max)))
         ) {
             error = true;
         } else {
@@ -177,6 +163,31 @@
 
     function handleKeydown(e: KeyboardEvent) {
         if (disabled || readonly) return;
+
+        // Block "-" if both min/max are >= 0
+        if (
+            e.key === "-" &&
+            min !== undefined &&
+            max !== undefined &&
+            min >= 0 &&
+            max >= 0
+        ) {
+            e.preventDefault();
+            return;
+        }
+
+        // Block "+" if both min/max are <= 0
+        if (
+            e.key === "+" &&
+            min !== undefined &&
+            max !== undefined &&
+            min <= 0 &&
+            max <= 0
+        ) {
+            e.preventDefault();
+            return;
+        }
+
         if (e.key === "Enter") {
             inputElement.blur();
         } else if (e.key === "ArrowUp") {
@@ -207,32 +218,14 @@
         {...restProps}
     />
 
-    {#if noButton}
-        <div
-            class="absolute right-1 top-0 bottom-0 flex flex-col justify-between text-gray-400 space-y-0.5"
-        >
-            <button
-                type="button"
-                tabindex="-1"
-                class="h-1/2 min-h-0 flex items-center justify-center cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
-                onmousedown={startIncrement}
-                onmouseup={stopIncrement}
-                onmouseleave={stopIncrement}
-                disabled={disabled || readonly}
-            >
-                <ChevronUp class="h-full w-full min-w-5 min-h-5" />
-            </button>
-            <button
-                type="button"
-                tabindex="-1"
-                class="h-1/2 min-h-0 flex items-center justify-center cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-90"
-                onmousedown={startDecrement}
-                onmouseup={stopDecrement}
-                onmouseleave={stopDecrement}
-                disabled={disabled || readonly}
-            >
-                <ChevronDown class="h-full w-full min-w-5 min-h-5" />
-            </button>
-        </div>
-    {/if}
+    {@render buttonsSnippet?.({
+        functions: {
+            startIncrement: startIncrement,
+            stopIncrement: stopIncrement,
+            startDecrement: startDecrement,
+            stopDecrement: stopDecrement,
+        },
+        disabled: disabled,
+        readonly: readonly,
+    })}
 </div>

@@ -11,12 +11,20 @@
         locale = navigator.language,
         triggerSnippet,
         dayCellSnippet,
+        required,
     }: DatepickerProps = $props();
 
     let currYear = $state(
         value ? value.getFullYear() : new Date().getFullYear(),
     );
     let currMonth = $state(value ? value.getMonth() : new Date().getMonth());
+    let error = $state(false);
+
+    let daysBetween = $derived(getDays(value));
+
+    let isOpen = $state(false);
+
+    let parentEl: HTMLDivElement;
 
     function getFirstWeekStart(year: number, month: number, weekStartsOn = 1) {
         const firstOfMonth = new Date(year, month, 1);
@@ -74,18 +82,6 @@
         return weekdays;
     }
 
-    function formatDate(): string {
-        if (value !== undefined) {
-            const formatter = new Intl.DateTimeFormat(locale, {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-            });
-            return formatter.format(value);
-        }
-        return "";
-    }
-
     function formatMonthYear(): string {
         const formatter = new Intl.DateTimeFormat(locale, {
             month: "long",
@@ -114,10 +110,6 @@
         daysBetween = getDays(new Date(currYear, currMonth, 1));
     }
 
-    let daysBetween = $derived(getDays(value));
-
-    let isOpen = $state(false);
-
     function handleSelect(day: Date) {
         if (value === undefined || value.getTime() !== day.getTime()) {
             isOpen = false;
@@ -127,19 +119,24 @@
         }
     }
 
-    let parentEl: HTMLDivElement;
-
     function handleClick(
         event: MouseEvent & { currentTarget: EventTarget & Document },
     ) {
         if (isOpen && !parentEl.contains(event.target as Node)) {
             isOpen = false;
+
+            if (value === undefined && required) {
+                error = true;
+            } else if (error === true) {
+                error = false;
+            }
         }
     }
 
-     function getDayStatus(day: Date): DayStatus {
+    function getDayStatus(day: Date): DayStatus {
         return {
-            isSelected: value !== undefined && day.getTime() === value.getTime(),
+            isSelected:
+                value !== undefined && day.getTime() === value.getTime(),
             isSelectable: isSelectable === undefined || isSelectable(day),
             isInMonth: day.getMonth() === currMonth,
         };
@@ -152,7 +149,12 @@
     bind:this={parentEl}
 >
     <button onclick={() => (isOpen = !isOpen)}>
-        {@render triggerSnippet(locale, value)}
+        {@render triggerSnippet({
+            locale: locale,
+            isOpen: isOpen,
+            error: error,
+            value: value,
+        })}
     </button>
 
     {#if isOpen}

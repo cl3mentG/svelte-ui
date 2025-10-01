@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { HTMLInputAttributes } from "svelte/elements";
     import { cn } from "../../utils";
     import Menu from "../shared/Menu.svelte";
     import type { GroupedOptions, Option } from "../types";
@@ -9,14 +10,13 @@
 
         name,
         id,
-        placeholder,
         disabled,
         readonly,
+        required,
 
         options,
         groups,
 
-        inputClass,
         menuClass,
         contentClass,
 
@@ -31,8 +31,10 @@
     }: SearchProps = $props();
 
     let isOpen = $state(false);
+    let error = $state(false);
     let search = $state("");
-    let selectElement: HTMLDivElement;
+    let parentElement: HTMLDivElement;
+    let inputElement: HTMLInputElement;
 
     let groupedOptions = $derived(
         Object.entries(options).reduce<GroupedOptions>(
@@ -66,14 +68,20 @@
         value = optionKey;
         search = optionData.label;
         isOpen = false;
-
+        error = false;
         if (onSelect) {
             onSelect(optionKey);
         }
     }
 
-    function handleBlur(e: FocusEvent) {
-        if (!selectElement.contains(e.relatedTarget as Node)) {
+    function handleBlur(event: FocusEvent) {
+        const next = event.relatedTarget as Node | null;
+        if (next && !parentElement.contains(next)) {
+            if (value === undefined && required) {
+                error = true;
+            } else if (error) {
+                error = false;
+            }
             isOpen = false;
         }
     }
@@ -91,6 +99,10 @@
         if (onSelect) {
             onSelect(value);
         }
+
+        if (required) {
+            error = true;
+        }
     }
 
     function handleInput(
@@ -103,29 +115,54 @@
             }
         }
     }
+
+    function handleClick(
+        event: MouseEvent & { currentTarget: EventTarget & Document },
+    ) {
+        if (!parentElement.contains(event.target as Node) && isOpen) {
+            if (value === undefined && required) {
+                error = true;
+            } else if (error) {
+                error = false;
+            }
+            isOpen = false;
+        }
+    }
 </script>
 
+{#snippet triggerChildren({
+    class: cls,
+    ...restProps
+}: Partial<HTMLInputAttributes> & { class?: string })}
+    <input
+        bind:this={inputElement}
+        class={cn("focus:outline-none w-full", cls)}
+        bind:value={search}
+        onfocus={() => (isOpen = true)}
+        onkeydown={handleKeydown}
+        onfocusout={handleBlur}
+        data-error={error || undefined}
+        oninput={handleInput}
+        disabled={disabled || readonly}
+        {...restProps}
+    />
+{/snippet}
+
+<svelte:document onclick={handleClick} />
 <div
-    bind:this={selectElement}
+    bind:this={parentElement}
     class="relative inline-flex flex-col"
     onfocusout={handleBlur}
 >
-    <div class="relative inline-block">
-        <input
-            class={cn("focus:outline-none w-full", inputClass)}
-            bind:value={search}
-            onfocus={() => (isOpen = true)}
-            onkeydown={handleKeydown}
-            oninput={handleInput}
-            disabled={disabled || readonly}
-            {placeholder}
-        />
+    {@render triggerSnippet({
+        selectedOption: value === undefined ? undefined : options[value],
+        input: triggerChildren,
+        isOpen: isOpen,
+        error: error,
+        resetOption: resetValue,
+        focusInput: () => inputElement.focus(),
+    })}
 
-        {@render triggerSnippet(
-            value === undefined ? undefined : options[value],
-            resetValue,
-        )}
-    </div>
     <input hidden {value} {name} />
 
     <Menu

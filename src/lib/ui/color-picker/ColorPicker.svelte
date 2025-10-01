@@ -1,18 +1,7 @@
 <script lang="ts">
-    import { Color } from "./types.svelte";
-    import type { Snippet } from "svelte";
+    import { Color } from "./color.svelte";
     import { cn } from "../utils";
-
-    type Props = {
-        triggerSnippet: Snippet<[Color]>;
-        menuClass?: string;
-        noAlpha?: boolean;
-        inputClass?: string;
-        sliderTrackClass?: string;
-        sliderThumbClass?: string;
-        gradientTrackClass?: string;
-        gradientThumbClass?: string;
-    };
+    import type { ColorPickerProps } from "./types";
 
     let {
         triggerSnippet,
@@ -23,11 +12,13 @@
         sliderThumbClass,
         gradientTrackClass,
         gradientThumbClass,
-    }: Props = $props();
+    }: ColorPickerProps = $props();
+
     let isOpen = $state(false);
+    let error = $state(false);
 
     let parentEl: HTMLDivElement;
-    
+
     // svelte-ignore non_reactive_update
     let gradientDiv: HTMLDivElement;
     // svelte-ignore non_reactive_update
@@ -149,7 +140,7 @@
 
 <div class="relative inline-flex items-center rounded-md" bind:this={parentEl}>
     <button onclick={() => (isOpen = !isOpen)}>
-        {@render triggerSnippet(color)}
+        {@render triggerSnippet({color: color, isOpen: isOpen, error: error})}
     </button>
 
     {#if isOpen}

@@ -1,10 +1,9 @@
-<script
-    lang="ts"
->
+<script lang="ts">
     import { cn } from "../../utils";
     import type { GroupedOptions } from "../types";
     import Menu from "../shared/Menu.svelte";
     import type { MultisearchProps } from "./types";
+    import type { HTMLInputAttributes } from "svelte/elements";
 
     let {
         value = $bindable([]),
@@ -12,7 +11,6 @@
         minCount = 0,
         maxCount,
 
-        triggerClass,
         contentClass,
         menuClass,
         name,
@@ -20,12 +18,12 @@
         disabled,
         readonly,
 
-        placeholder = "Search",
         options,
         groups,
 
         onSelect,
         noResultSnippet,
+        triggerSnippet,
         optionSnippet,
         groupSnippet,
         sortOptions,
@@ -48,7 +46,12 @@
             (acc, [optionKey, opt]) => {
                 const groupKey = opt.group ?? "_ungrouped_";
 
-                // if no search or search query not included
+                // 1. Skip options already selected
+                if (value.includes(optionKey)) {
+                    return acc;
+                }
+
+                // 2. Skip if it doesn’t match the search
                 if (
                     !opt.label
                         .toLocaleLowerCase()
@@ -57,6 +60,7 @@
                     return acc;
                 }
 
+                // 3. Create group if missing
                 if (!acc[groupKey]) {
                     acc[groupKey] = {
                         options: {},
@@ -83,24 +87,31 @@
         }
 
         if (maxCount === undefined || value.length < maxCount) {
-            inputElement.focus(); // keep input active for typing
+            inputElement.focus();
         }
     }
 
     function removeOption(val: string, e?: MouseEvent) {
         e?.stopPropagation();
         value = value.filter((v) => v !== val);
+        validateCount();
         inputElement.focus();
+    }
+
+    function validateCount() {
+        if (
+            (minCount !== undefined && value.length < minCount) ||
+            (maxCount !== undefined && value.length > maxCount)
+        ) {
+            error = true;
+        } else {
+            error = false;
+        }
     }
 
     function handleBlur(e: FocusEvent) {
         if (!parentElement.contains(e.relatedTarget as Node)) {
-            console.log(value.length, minCount, maxCount);
-            if (value.length < minCount) {
-                error = true;
-            } else if (error) {
-                error = false;
-            }
+            validateCount();
             isOpen = false;
             isFocused = false;
         }
@@ -115,6 +126,35 @@
     }
 </script>
 
+{#snippet selectedOptionsSnippet()}
+    {#each value as v, index (v)}
+        {@const opt = options[v]}
+        {@render selectedOptionSnippet(options[v], () => removeOption(v))}
+
+        {#if name !== undefined}
+            <input hidden name={`${name}_${index}`} value={v} />
+        {/if}
+    {/each}
+{/snippet}
+
+{#snippet input({
+    class: cls,
+    ...restProps
+}: Partial<HTMLInputAttributes> & { class?: string })}
+    <input
+        bind:this={inputElement}
+        type="text"
+        bind:value={search}
+        onfocus={() => {
+            isOpen = true;
+            isFocused = true;
+        }}
+        onkeydown={handleKeydown}
+        disabled={disabled || readonly}
+        {...restProps}
+        class={cn("outline-none", cls)}
+    />
+{/snippet}
 <div
     bind:this={parentElement}
     class="relative inline-flex flex-col"
@@ -122,10 +162,6 @@
 >
     <div
         bind:this={childElement}
-        class={cn(
-            "flex flex-wrap items-center gap-1 rounded-md cursor-text relative",
-            triggerClass,
-        )}
         data-error={error || undefined}
         role="combobox"
         aria-expanded={isOpen}
@@ -149,30 +185,17 @@
             }
         }}
     >
-        {#each value as v, index (v)}
-            {@const opt = options[v]}
-            {@render selectedOptionSnippet(options[v], () => removeOption(v))}
-
-            {#if name !== undefined}
-                <input hidden name={`${name}_${index}`} value={v} />
-            {/if}
-        {/each}
-
-        <div class="flex items-center gap-2 flex-1 min-w-[80px] shrink">
-            <input
-                bind:this={inputElement}
-                type="text"
-                class="flex-1 min-w-0 focus:outline-none"
-                {placeholder}
-                bind:value={search}
-                onfocus={() => {
-                    isOpen = true;
-                    isFocused = true;
-                }}
-                onkeydown={handleKeydown}
-                disabled={disabled || readonly}
-            />
-        </div>
+        {@render triggerSnippet({
+            selectedOptionsSnippet: selectedOptionsSnippet,
+            isOpen: isOpen,
+            error: error,
+            input: input,
+            focusInput: () => {
+                isOpen = true;
+                inputElement.focus();
+            },
+            resetOptions: () => (value = []),
+        })}
     </div>
 
     <Menu

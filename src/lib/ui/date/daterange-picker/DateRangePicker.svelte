@@ -1,7 +1,11 @@
 <script lang="ts">
     import { cn } from "../../utils";
     import { ChevronLeft, ChevronRight } from "@lucide/svelte";
-    import type { DateRange, DaterangepickerProps, DayRangeStatus } from "./types";
+    import type {
+        DateRange,
+        DaterangePickerProps,
+        DayRangeStatus,
+    } from "./types";
 
     let {
         isSelectable,
@@ -9,7 +13,8 @@
         menuClass,
         triggerSnippet,
         dayCellSnippet,
-    }: DaterangepickerProps = $props();
+        required,
+    }: DaterangePickerProps = $props();
 
     // Current month/year state
     let currYear = $state(new Date().getFullYear());
@@ -19,6 +24,7 @@
     let range: DateRange = $state({ start: null, end: null });
 
     let isOpen = $state(false);
+    let error = $state(false);
     let parentEl: HTMLDivElement;
 
     // Utility to get first day of first week
@@ -109,15 +115,25 @@
             } else {
                 range.end = day;
                 isOpen = false;
+
+                if (required && error) {
+                    error = false;
+                }
             }
         }
     }
-    
+
     // Close popup when clicking outside
     function handleClick(event: MouseEvent) {
         const target = event.target as Node;
         if (isOpen && parentEl && !parentEl.contains(target)) {
             isOpen = false;
+
+            if (range.end === null && required) {
+                error = true;
+            } else if (error === true) {
+                error = false;
+            }
         }
     }
 
@@ -141,7 +157,12 @@
 
 <div class="relative inline-flex items-center rounded-md" bind:this={parentEl}>
     <button onclick={() => (isOpen = !isOpen)}>
-        {@render triggerSnippet(locale, range)}
+        {@render triggerSnippet({
+            locale: locale,
+            value: range,
+            error: error,
+            isOpen: isOpen,
+        })}
     </button>
 
     {#if isOpen}
@@ -175,7 +196,7 @@
                             disabled={!status.isSelectable}
                             onclick={() => handleSelect(day)}
                         >
-                            {@render dayCellSnippet(status, day)}
+                            {@render dayCellSnippet(day, status)}
                         </button>
                     {/each}
                 </div>

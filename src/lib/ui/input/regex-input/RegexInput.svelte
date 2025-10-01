@@ -1,20 +1,15 @@
 <script lang="ts">
-    import type { HTMLInputAttributes } from "svelte/elements";
-
-    type InputProps = HTMLInputAttributes & {
-        class?: string;
-        validRegex: RegExp;
-        completionRegex?: RegExp;
-        value?: string;
-    };
+    import type { RegexInputProps } from "./types";
 
     let {
         class: cls,
-        value = $bindable(),
+        value = $bindable(undefined),
         validRegex,
         completionRegex,
+        required,
+        name,
         ...restProps
-    }: InputProps = $props();
+    }: RegexInputProps = $props();
 
     let inputValue = $derived(value);
     let error = $state(false);
@@ -31,10 +26,18 @@
     function handleBlur(
         event: FocusEvent & { currentTarget: EventTarget & HTMLInputElement },
     ) {
-        if (inputValue !== "" && !validRegex.test(inputValue)) {
-            error = true;
-        } else if (error) {
-            error = false;
+        if (inputValue === "" || inputValue === undefined) {
+            if (!required) {
+                error = false;
+            } else {
+                error = true;
+            }
+        } else {
+            if (validRegex.test(inputValue)) {
+                error = false;
+            } else {
+                error = true;
+            }
         }
     }
 
